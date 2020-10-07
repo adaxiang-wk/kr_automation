@@ -203,7 +203,7 @@ class Scrapper:
             return []
         elif len(th) == 1 and tranche_num > 0:
             print('not a tranche')
-            return 'not a tranche', 'no participation'
+            return 'not a tranche'
         else:
 
             bookrunner_table = th[tranche_num].find_parent('table')
@@ -221,14 +221,12 @@ class Scrapper:
                         continue
                     else:
                         bkrs.append(txt)
-                        print(bkr_cand)
-                        print(idx)
                         participate = bkr_cand[idx+3].text.replace(",", "")
                         participate = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", participate)
                         participates.append(participate)
                         break
             
-            return bkrs, participates
+            return (bkrs, participates)
 
 
 
@@ -300,7 +298,8 @@ def search_bookrunner(df):
 
         if report is not None:
             for tranch_idx, tranche in deal.iterrows():
-                bookrunners, participates = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
+                bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
+                bookrunners, participates = bookrunner_info[0], bookrunner_info[1]
                 if bookrunners == 'not a tranche':
                     continue
                 syndicate.append(bookrunners)
