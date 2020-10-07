@@ -1,4 +1,4 @@
-import parser.data_utils as du
+import infoParser.data_utils as du
 import pandas as pd
 import json
 import numpy as np
@@ -10,26 +10,25 @@ TODO:
 """
 
 class Parser:
-    def __init__(self, format_fp, data_fp):
-        with open(format_fp) as js_file:
+    def __init__(self, data_fp):
+        with open('./dependencies/post_format.json') as js_file:
             self.post_format_dict = json.load(js_file)
 
         self.deal_dict = self.post_format_dict.copy()
         self.tranche_format = self.deal_dict['Tranches'][0].copy()
         self.syndicate_format = self.tranche_format['Syndicate'][0].copy()
         self.parsed_history = []
+        self.data_df = du.load_bkr_df(data_fp)
 
 
     def find_tranches(self, record):
-        # cleaned name of the record
-        cleaned_name_idx = record['name'].find('票据')
-        cleaned_name = record['name'][:cleaned_name_idx+2]
+        issuer_name = record['issuer_name']
+        listing_date = record['listing_date']
 
         # from the candidates (all having same issuer as the record)
-        # find the ones with the same cleaned name
+        # find the ones with the same listing date
         candicates = self.data_df[self.data_df['issuer'] == record['issuer']].copy()
-        candicates.loc[:, 'cleaned_name'] = candicates['name'].apply(lambda x: x[:x.find('票据')+2])
-        one_deal = candicates[candicates['cleaned_name'] == cleaned_name].drop(['cleaned_name'], axis=1).copy()
+        one_deal = candicates.loc[candicates['listing_date'] == listing_date, :]
         
         self.parsed_history.extend(list(one_deal['local_symbol']))
         return one_deal
