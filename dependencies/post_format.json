@@ -1,0 +1,104 @@
+{
+  "IssuerId": null,
+  "IsInvestmentGrade": false,
+  "NationalityId": null,
+  "NationalityIdOverride": null,
+  "NationalityOfRiskIds": null,
+  "GeneralMarketId": null,
+  "UseOfProceedsIds": null,
+  "PricingStatusId": null,
+  "AnnouncementComplexDate": {
+    "TypeId": 0,
+    "Date": null
+  },
+  "PricingComplexDate": {
+    "TypeId": 0,
+    "Date": null
+  },
+  "ExpectedPricingComplexDate": null,
+  "SettlementComplexDate": {
+    "TypeId": 0,
+    "Date": null
+  },
+  "IsProgramme": null,
+  "ProgrammeId": null,
+  "MtnIssueTypeId": null,
+  "MtnIssueTypeOldId": null,
+  "IsShelf": null,
+  "SECRegistrationNumber": null,
+  "SECAccessionNumber": null,
+  "IsForwardCalendar": false,
+  "RumourDate": null,
+  "PendingDate": null,
+  "MandatedDate": null,
+  "RoadshowDate": null,
+  "PrincipalPayingAgentId": null,
+  "TrusteeId": null,
+  "SourceOfInformationIds": [
+    315
+  ],
+  "IndicativeFeePercentage": null,
+  "IsVerified": true,
+  "Tranches": [
+    {
+      "Id": null,
+      "RatingsAtLaunchOverride": null,
+      "MarketTypeId": null,
+      "IssueTypeId": null,
+      "CharacteristicIds": null,
+      "IsInternationalMarket": false,
+      "IsHighYield": null,
+      "FirstCouponDate": null,
+      "InterestAccrualDate": null,
+      "MaturityComplexDate": {
+        "TypeId": 0,
+        "Date": null
+      },
+      "BearerRegisteredId": null,
+      "SeniorityId": null,
+      "GreenBondInstrumentTypeId": null,
+      "IsSubordinated": false,
+      "IsFungible": false,
+      "FungeKey": null,
+      "IsCollateralized": false,
+      "CurrencyId": null,
+      "CurrencyAmount": null,
+      "Denominations": 1,
+      "IssuePricePercentage": null,
+      "SpreadToBenchmarkBasisPoints": null,
+      "Benchmark": null,
+      "SpreadToSwapBasisPoints": null,
+      "RedemptionPricePercentage": null,
+      "DayCountId": null,
+      "CouponPercentage": null,
+      "CouponFrequencyId": null,
+      "CouponSetFrequencyId": null,
+      "BasisId": null,
+      "MarginPercentage": null,
+      "DiscountMarginBasisPoints": null,
+      "GrossFeePercentage": null,
+      "GoverningLawIds": null,
+      "ListingIds": null,
+      "SellingRestrictionIds": null,
+      "IsRule144A": false,
+      "SECRegulationOfferingId": null,
+      "ISINs": null,
+      "CUSIP": null,
+      "CommonCodes": null,
+      "IsRankEligible": false,
+      "IsGovernmentGuaranteedScheme": false,
+      "GuarantorIds": null,
+      "Syndicate": [
+        {
+          "Id": null,
+          "BankTitleIds": null,
+          "Participation": null,
+          "IsLeadLeft": false,
+          "IndicativeParticipationPercentage": null
+        }
+      ],
+      "PriceTalk": null,
+      "Outstanding": null
+    }
+  ]
+}

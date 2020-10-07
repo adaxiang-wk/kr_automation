@@ -1,4 +1,4 @@
-import infoPaser.data_utils as du
+import parser.data_utils as du
 import pandas as pd
 import json
 import numpy as np
@@ -10,14 +10,7 @@ TODO:
 """
 
 class Parser:
-    def __init__(self, format_fp, data_fp, file_type):
-        if file_type == 'excel':
-            self.data_df = du.load_excel(data_fp)
-        elif file_type == 'csv':
-            self.data_df = du.load_csv(data_fp)
-        else:
-            raise ValueError('Wrong file type')
-
+    def __init__(self, format_fp, data_fp):
         with open(format_fp) as js_file:
             self.post_format_dict = json.load(js_file)
 
