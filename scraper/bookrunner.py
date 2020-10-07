@@ -10,7 +10,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import re
 
-th_list = ['명칭', '주소', '합계']
+th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율']
 
 
 class Scrapper:
@@ -203,7 +203,7 @@ class Scrapper:
             return []
         elif len(th) == 1 and tranche_num > 0:
             print('not a tranche')
-            return 'not a tranche'
+            return 'not a tranche', 'no participation'
         else:
 
             bookrunner_table = th[tranche_num].find_parent('table')
@@ -211,18 +211,24 @@ class Scrapper:
             all_records = table_body.find_all('tr')
 
             bkrs = []
+            participates = []
             for record in all_records:
                 bkr_cand = record.find_all('td')
-                for bkr in bkr_cand[:3]:
+                for idx, bkr in enumerate(bkr_cand[:3]):
                     txt = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", bkr.text)
                     # txt = re.sub(r"[\(\[].*?[\)\]]", "", txt)
                     if (txt == '-') or (txt in th_list) or (len(txt) < 3):
                         continue
                     else:
                         bkrs.append(txt)
+                        print(bkr_cand)
+                        print(idx)
+                        participate = bkr_cand[idx+3].text.replace(",", "")
+                        participate = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", participate)
+                        participates.append(participate)
                         break
             
-            return bkrs
+            return bkrs, participates
 
 
 
@@ -248,11 +254,15 @@ def detect_tranches(record, df):
     return deal
 
 
-def preprocess(input_fp):
+def preprocess(input_fp, sort=True):
     df = pd.read_csv(input_fp)
     df['identifier1'] = df['한글종목명'].apply(lambda x: extract_identifier(x))
     df['identifier2'] = df['identifier1'].apply(lambda x: x[3:])
-    df = df.sort_values(by=['발행기관명', '상장일', 'identifier1']).reset_index()
+
+    if sort:
+        df = df.sort_values(by=['발행기관명', '상장일', 'identifier1']).reset_index()
+    else:
+        df = df.reset_index()
 
     # df.to_csv('./data/sorted_final_df.csv')
 
@@ -263,7 +273,8 @@ def search_bookrunner(df):
     print(f'Total {df.shape[0]} records')
     history = []
     syndicate = []
-    for df_idx, record in df.iterrows():
+    synd_part = []
+    for _, record in df.iterrows():
         if record['표준코드'] in history:
             continue
         my_scrapper = Scrapper()
@@ -289,24 +300,28 @@ def search_bookrunner(df):
 
         if report is not None:
             for tranch_idx, tranche in deal.iterrows():
-                bookrunners = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
+                bookrunners, participates = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
                 if bookrunners == 'not a tranche':
                     continue
                 syndicate.append(bookrunners)
+                synd_part.append(participates)
                 history.append(tranche['표준코드'])
-                print(f'Detected book runners:\n{bookrunners}')
+                print(f'Detected book runners:\n{bookrunners}, {participates}')
         else:
             for _ in range(deal.shape[0]):
-                bookrunner = ['[]']
-                syndicate.append(bookrunner)
+                bookrunners = ['[]']
+                participates = ['[]']
+                syndicate.append(bookrunners)
+                synd_part.append(participates)
                 isin_log = list(deal['표준코드'])
                 history.extend(isin_log)
-                print(f'Detected book runners:\n{bookrunners}')
+                print(f'Detected book runners:\n{bookrunners}, {participates}')
         my_scrapper.driver.quit()
 
         # print(f'Got book runners {history}')
-        print(f'{df.shape[0] - df_idx-1} left')
+        print(f'{df.shape[0] - len(history)} left')
     df['bookrunners'] = syndicate
+    df['participation'] = synd_part
         
 
     return df
