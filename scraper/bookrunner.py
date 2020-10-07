@@ -200,7 +200,7 @@ class Scrapper:
 
         if len(th) == 0:
             print('cannot find bookrunner tables in prospectus')
-            return []
+            return [[], []]
         elif len(th) == 1 and tranche_num > 0:
             print('not a tranche')
             return 'not a tranche'
@@ -299,9 +299,9 @@ def search_bookrunner(df):
         if report is not None:
             for tranch_idx, tranche in deal.iterrows():
                 bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
-                bookrunners, participates = bookrunner_info[0], bookrunner_info[1]
-                if bookrunners == 'not a tranche':
+                if bookrunner_info == 'not a tranche':
                     continue
+                bookrunners, participates = bookrunner_info[0], bookrunner_info[1]
                 syndicate.append(bookrunners)
                 synd_part.append(participates)
                 history.append(tranche['표준코드'])
