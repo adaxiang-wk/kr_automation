@@ -1,5 +1,7 @@
 import scraper.general_info as gi 
-import scraper.bookrunner as bk 
+import scraper.bookrunner as bk
+
+DATA_ENV = 'prd'
 
 if __name__ == "__main__":
     start_date = 20190930

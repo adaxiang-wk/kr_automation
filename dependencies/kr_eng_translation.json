@@ -16,7 +16,7 @@
     "발행금액": "issue_size",
     "발행일": "settlement_date",
     "발행통화": "issuance_currency",
-    "상환일": "maturity date",
+    "상환일": "maturity_date",
     "특이채권유형": "special_bond_type",
     "보증담보": "guarantee_collateral",
     "보증률(%)": "guarantee_rate_%",
