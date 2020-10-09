@@ -1,4 +1,4 @@
-import infoParser.data_utils as du
+import infoParser.data_utils as tools
 import pandas as pd
 import json
 import numpy as np
@@ -10,7 +10,7 @@ TODO:
 """
 
 class Parser:
-    def __init__(self, data_fp):
+    def __init__(self, data_fp, env_type):
         with open('./dependencies/post_format.json') as js_file:
             self.post_format_dict = json.load(js_file)
 
@@ -18,7 +18,9 @@ class Parser:
         self.tranche_format = self.deal_dict['Tranches'][0].copy()
         self.syndicate_format = self.tranche_format['Syndicate'][0].copy()
         self.parsed_history = []
-        self.data_df = du.load_bkr_df(data_fp)
+        
+        self.du = tools.Tool(env_type=env_type)
+        self.data_df = self.du.load_bkr_df(data_fp)
 
 
     def find_tranches(self, record):
@@ -27,7 +29,7 @@ class Parser:
 
         # from the candidates (all having same issuer as the record)
         # find the ones with the same listing date
-        candicates = self.data_df[self.data_df['issuer'] == record['issuer']].copy()
+        candicates = self.data_df[self.data_df['issuer'] == issuer_name].copy()
         one_deal = candicates.loc[candicates['listing_date'] == listing_date, :]
         
         self.parsed_history.extend(list(one_deal['local_symbol']))
@@ -35,87 +37,75 @@ class Parser:
 
 
     def parse_one_deal(self, record):
-        self.deal_dict['IssuerId'] = du.get_company_info(
-                                        record['issuer'],
-                                        record['name'],
-                                        record['bond_type'])
+        self.deal_dict['IssuerId'] = self.du.get_company_info(record['issuer_name'])
         self.deal_dict['IsInvestmentGrade'] = True # by default
-        self.deal_dict['NationalityId'] = 44  # for China
-        self.deal_dict['NationalityOfRiskIds'] = [44]  # for China
+        self.deal_dict['NationalityId'] = 119  # for Korea
+        self.deal_dict['NationalityOfRiskIds'] = [119]  # for China
         self.deal_dict['GeneralMarketId'] = 20 # Non-US Domestic by default
         self.deal_dict['UseOfProceedsIds'] = [110]  # GCP default
         self.deal_dict['PricingStatusId'] = 1 # by default
         self.deal_dict['AnnouncementComplexDate'] = {
-            "TypeId": 1, "Date": du.parse_date(record['issue_date'])}
+            "TypeId": 1, "Date": self.du.parse_ann_price_date(record['settlement_date'])}
         self.deal_dict['PricingComplexDate'] = {
-            "TypeId": 1, "Date": du.parse_date(record['issue_date'])}
+            "TypeId": 1, "Date": self.du.parse_ann_price_date(record['settlement_date'])}
         self.deal_dict['SettlementComplexDate'] = {
-            "TypeId": 1, "Date": du.parse_date(record['interest_accr_date'])}
-        if record['bond_type'] == 'ABN' or record['bond_type'] == 'ABS':
-            self.deal_dict['TrusteeId'] = du.get_trusteeID(record['issuer'])
+            "TypeId": 1, "Date": self.du.parse_date(record['settlement_date'])}
+        
 
         
-        tranche_list = []
-        tranche_df = self.find_tranches(record)
-        for _, row in tranche_df.iterrows():
-            tranche_dict = self.parse_one_tranche(row)
+        # tranche_list = []
+        # tranche_df = self.find_tranches(record)
+        # for _, row in tranche_df.iterrows():
+        #     tranche_dict = self.parse_one_tranche(row)
 
-            syndicate = record['bookrunners']
-            if syndicate == "['']" or syndicate == "[]":
-                tranche_dict['Syndicate'] = [self.parse_no_syndicate()]
-            else:
-                bookrunners = ast.literal_eval(syndicate)
-                syn_list = []
-                bkr_history = []
-                for bkr_name in bookrunners:
-                    if bkr_name in bkr_history:
-                        continue
-                    syn = self.parse_syndicate(bkr_name, record)
-                    if syn is not None:
-                        syn_list.append(syn)
-                    bkr_history.append(bkr_name)
-                if len(syn_list) > 0:
-                    tranche_dict['Syndicate'] = syn_list
-                else:
-                    tranche_dict['Syndicate'] = [self.parse_no_syndicate()]
-            tranche_list.append(tranche_dict)
-        self.deal_dict['Tranches'] = tranche_list
+        #     syndicate = record['bookrunners']
+        #     if syndicate == "['']" or syndicate == "[]":
+        #         tranche_dict['Syndicate'] = [self.parse_no_syndicate()]
+        #     else:
+        #         bookrunners = ast.literal_eval(syndicate)
+        #         syn_list = []
+        #         bkr_history = []
+        #         for bkr_name in bookrunners:
+        #             if bkr_name in bkr_history:
+        #                 continue
+        #             syn = self.parse_syndicate(bkr_name, record)
+        #             if syn is not None:
+        #                 syn_list.append(syn)
+        #             bkr_history.append(bkr_name)
+        #         if len(syn_list) > 0:
+        #             tranche_dict['Syndicate'] = syn_list
+        #         else:
+        #             tranche_dict['Syndicate'] = [self.parse_no_syndicate()]
+        #     tranche_list.append(tranche_dict)
+        # self.deal_dict['Tranches'] = tranche_list
         
 
 
     def parse_one_tranche(self, record):
         tranche_dict = self.tranche_format.copy()
         tranche_dict['MarketTypeId'] = 1 # Domestic market public issue by default
-        tranche_dict['IssueTypeId'] = du.parse_issue_type(
-                                        record['cp_rate'], 
-                                        record['initial_base_rate'],
-                                        record['margin_rate'])
-
-        tranche_dict['CharacteristicIds'] = du.parse_characts(record['mat_date'], record['bond_type'], record['cp_rate'])
+        tranche_dict['IssueTypeId'] = self.du.parse_issue_type() # default TODO
+        tranche_dict['CharacteristicIds'] = None # default
         tranche_dict['IsInternationalMarket'] = False
-        tranche_dict['FirstCouponDate'] = du.calc_1cp_date(
-                                                record['interest_accr_date'], 
-                                                record['coupon_freq'])
-        tranche_dict['InterestAccrualDate'] = du.parse_date(record['interest_accr_date'])
-        tranche_dict['MaturityComplexDate'] = du.parse_mat_date(record['mat_date'], record['cp_rate'])
+
+        tranche_dict['FirstCouponDate'] = self.du.parse_date(record['initial_interest_payment_date'])
+        tranche_dict['InterestAccrualDate'] = self.du.parse_date(record['settlement_date'])
+        tranche_dict['MaturityComplexDate'] = self.du.parse_mat_date(record['maturity_date'], record['coupon_rate'])
+
         tranche_dict['BearerRegisteredId'] = 3  # registered by default
-        tranche_dict['SeniorityId'] = du.parse_seniority(record['bond_type'], record['name'])[0]
-        # self.tranch_dict['GreenBondInstrumentTypeId']
-        tranche_dict['IsSubordinated'] = not du.parse_seniority(record['bond_type'], record['name'])[1]
+        tranche_dict['SeniorityId'] = self.du.parse_seniority(record['guarantee_collateral'])[0]
+        tranche_dict['IsSubordinated'] = not self.du.parse_seniority(record['guarantee_collateral'])[1]
         tranche_dict['IsFungible'] = False  # by default
-        tranche_dict['IsCollateralized'] = True if record['bond_type'] == 'ABN' else False
-        tranche_dict['CurrencyId'] = 35 # Yuan by default
-        tranche_dict['CurrencyAmount'] = du.get_currency_info(record['currency_amount'])
+        tranche_dict['IsCollateralized'] = False
+        tranche_dict['CurrencyId'] = 89 # Yuan by default
+        tranche_dict['CurrencyAmount'] = self.du.parse_issue_size(record['issue_size'])
         tranche_dict['IssuePricePercentage'] = 100  # by default
         tranche_dict['RedemptionPricePercentage'] = 100  # by default
         # self.tranche_dict['DayCountId'] 
-        tranche_dict['CouponPercentage'] = du.get_cp_rate(
-                                                    record['cp_rate'], 
-                                                    record['initial_base_rate'],
-                                                    record['margin_rate']
-                                                )
-        tranche_dict['CouponFrequencyId'] = du.parse_cp_freq(record['coupon_freq'])
-        tranche_dict['GoverningLawIds'] = [241] # by default
+        tranche_dict['CouponPercentage'] = 0
+        tranche_dict['CouponFrequencyId'] = self.du.parse_cp_freq(record['interest_calculation_cycle_months'])
+        tranche_dict['GoverningLawIds'] = [681] # by default
+        tranche_dict['ListingIds'] = [122] # by default
 
         return tranche_dict
 
