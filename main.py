@@ -6,15 +6,15 @@ if __name__ == "__main__":
     end_date = 20200930
 
     isin_fp = './data/korea.xls'
-    general_info_fp = './data/gi_df.csv'
-    bkr_fp = './data/bkr_df.csv'
+    general_info_fp = './data/test.csv'
+    bkr_fp = './data/test_bkr.csv'
 
     # gi_scrapper = gi.Scrapper()
     # gi_scrapper.scrap_list_of_deals(isin_fp, general_info_fp)
     # gi_scrapper.driver.quit()
 
 
-    sorted_gi_df = bk.preprocess(general_info_fp, sort=False)
+    sorted_gi_df = bk.preprocess(general_info_fp, sort=True, save=False)
     bkr_df = bk.search_bookrunner(sorted_gi_df)
     bkr_df.to_csv(bkr_fp, index=False)
  

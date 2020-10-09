@@ -10,7 +10,8 @@ import pandas as pd
 from datetime import datetime, timedelta
 import re
 
-th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율']
+th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사']
+bank_roles = ['대표', '인수', '대표주관회사']
 
 
 class Scrapper:
@@ -192,41 +193,117 @@ class Scrapper:
             report_html = self.find_prospectus(identifier)
 
         return report_html
+
+    
+    def _search_bkr_table(self, report_soup):
+        th = report_soup.find_all("th", string='인수인')
+
+        found = []
+        if len(th) > 0:
+            found = th
+        else:
+            th = report_soup.find_all("p", string='인수인')
+            if len(th) > 0:
+                found = th
+            else:
+                th = report_soup.find_all(lambda tag: tag.text == '인수인')
+                if len(th) > 0:
+                    found = th
+        
+        return found
+            
         
         
     def get_bookrunner(self, report_html, tranche_num=0):
+        
         soup = BeautifulSoup(report_html, 'html.parser')
-        th = soup.find_all(lambda tag:tag.text == '인수인')
+        th = self._search_bkr_table(soup)
 
         if len(th) == 0:
+            # th = soup.find_all("p", string='인수인')
+            # print(th)
+            # if len(th) == 0:
             print('cannot find bookrunner tables in prospectus')
-            return [[], []]
+            return ([], [], [], [])
         elif len(th) == 1 and tranche_num > 0:
             print('not a tranche')
             return 'not a tranche'
         else:
-
             bookrunner_table = th[tranche_num].find_parent('table')
+            html_content = str(bookrunner_table)
+
+            has_comanager = False
+            if '구분' in html_content:
+                has_comanager = True
+
             table_body = bookrunner_table.find('tbody')
             all_records = table_body.find_all('tr')
 
             bkrs = []
-            participates = []
+            bkrs_parts = []
+            comanagers = []
+            cmgrs_parts = []
             for record in all_records:
-                bkr_cand = record.find_all('td')
-                for idx, bkr in enumerate(bkr_cand[:3]):
-                    txt = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", bkr.text)
-                    # txt = re.sub(r"[\(\[].*?[\)\]]", "", txt)
-                    if (txt == '-') or (txt in th_list) or (len(txt) < 3):
+                entity_cand = record.find_all('td')
+
+                ### special case ######
+                if entity_cand[0].text in bank_roles:
+                    has_comanager = True
+                
+                # print("found table")
+                # print(f"has co-manager: {has_comanager}")
+                if has_comanager:
+                    entity_idx = 1
+                    if len(entity_cand) < 5:
                         continue
+                else:
+                    entity_idx = 0
+                    if len(entity_cand) < 4:
+                        continue
+
+                
+
+                parts_idx = entity_idx + 3
+                entity = entity_cand[entity_idx]
+                parts = entity_cand[parts_idx].text
+                parts = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", parts)
+                entity_txt = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", entity.text)
+                if (entity_txt == '-') or (entity_txt in th_list):
+                    # print("other noisy info")
+                    continue
+                
+                if has_comanager:
+                    if '대표' in entity_cand[0].text:
+                        # print("found book runner")
+                        bkrs.append(entity_txt)
+                        bkrs_parts.append(parts)
                     else:
-                        bkrs.append(txt)
-                        participate = bkr_cand[idx+3].text.replace(",", "")
-                        participate = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", participate)
-                        participates.append(participate)
-                        break
+                        # print("found co-manager")
+                        comanagers.append(entity_txt)
+                        cmgrs_parts.append(parts)
+                else:
+                    bkrs.append(entity_txt)
+                    bkrs_parts.append(parts)
+
+            if len(comanagers) == 1 or len(bkrs) == 0:
+                bkrs = comanagers
+                bkrs_parts = cmgrs_parts
+
+                comanagers = []
+                cmgrs_parts = []
+                # for idx, bkr in enumerate(bkr_cand[:3]):
+                #     txt = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", bkr.text)
+                #     # txt = re.sub(r"[\(\[].*?[\)\]]", "", txt)
+                #     if (txt == '-') or (txt in th_list):
+                #         continue
+                #     else:
+                #         bkrs.append(txt)
+                #         participate = bkr_cand[idx+3].text.replace(",", "")
+                #         participate = re.sub(r"[\n\t\s]*|[\(\[].*?[\)\]]","", participate)
+                #         participates.append(participate)
+                #         break
             
-            return (bkrs, participates)
+            return (bkrs, bkrs_parts, comanagers, cmgrs_parts)
 
 
 
@@ -252,7 +329,7 @@ def detect_tranches(record, df):
     return deal
 
 
-def preprocess(input_fp, sort=True):
+def preprocess(input_fp, sort=True, save=False):
     df = pd.read_csv(input_fp)
     df['identifier1'] = df['한글종목명'].apply(lambda x: extract_identifier(x))
     df['identifier2'] = df['identifier1'].apply(lambda x: x[3:])
@@ -262,7 +339,8 @@ def preprocess(input_fp, sort=True):
     else:
         df = df.reset_index()
 
-    # df.to_csv('./data/sorted_final_df.csv')
+    if save:
+        df.to_csv('./data/sorted_final_df.csv', index=False)
 
     return df
             
@@ -272,6 +350,9 @@ def search_bookrunner(df):
     history = []
     syndicate = []
     synd_part = []
+
+    syndi_cmgrs = []
+    syndi_cmgrs_parts = []
     for _, record in df.iterrows():
         if record['표준코드'] in history:
             continue
@@ -301,26 +382,37 @@ def search_bookrunner(df):
                 bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
                 if bookrunner_info == 'not a tranche':
                     continue
-                bookrunners, participates = bookrunner_info[0], bookrunner_info[1]
+                bookrunners, bkr_parts, comanagers, cmgrs_parts = bookrunner_info[0], bookrunner_info[1], bookrunner_info[2], bookrunner_info[3]
                 syndicate.append(bookrunners)
-                synd_part.append(participates)
+                synd_part.append(bkr_parts)
+                syndi_cmgrs.append(comanagers)
+                syndi_cmgrs_parts.append(cmgrs_parts)
+
                 history.append(tranche['표준코드'])
-                print(f'Detected book runners:\n{bookrunners}, {participates}')
+                print(f'Detected book runners:\n{bookrunners}, {bkr_parts}, {comanagers}, {cmgrs_parts}')
         else:
             for _ in range(deal.shape[0]):
-                bookrunners = ['[]']
-                participates = ['[]']
+                bookrunners = [[]]
+                bkr_parts = [[]]
+                comanagers = [[]]
+                cmgrs_parts = [[]]
+
                 syndicate.append(bookrunners)
-                synd_part.append(participates)
+                synd_part.append(bkr_parts)
+                syndi_cmgrs.append(comanagers)
+                syndi_cmgrs_parts.append(cmgrs_parts)
+
                 isin_log = list(deal['표준코드'])
                 history.extend(isin_log)
-                print(f'Detected book runners:\n{bookrunners}, {participates}')
+                print(f'Detected book runners:\n{bookrunners}, {bkr_parts}, {comanagers}, {cmgrs_parts}')
         my_scrapper.driver.quit()
 
         # print(f'Got book runners {history}')
         print(f'{df.shape[0] - len(history)} left')
     df['bookrunners'] = syndicate
-    df['participation'] = synd_part
+    df['bkr_parts'] = synd_part
+    df['comanagers'] = syndi_cmgrs
+    df['cmgr_parts'] = syndi_cmgrs_parts
         
 
     return df
