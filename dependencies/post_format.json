@@ -63,7 +63,7 @@
       "IsCollateralized": false,
       "CurrencyId": null,
       "CurrencyAmount": null,
-      "Denominations": 1,
+      "Denominations": 10,
       "IssuePricePercentage": null,
       "SpreadToBenchmarkBasisPoints": null,
       "Benchmark": null,
