@@ -262,7 +262,6 @@ class Scrapper:
                         continue
 
                 
-
                 parts_idx = entity_idx + 3
                 entity = entity_cand[entity_idx]
                 parts = entity_cand[parts_idx].text
@@ -274,18 +273,16 @@ class Scrapper:
                 
                 if has_comanager:
                     if '대표' in entity_cand[0].text:
-                        # print("found book runner")
                         bkrs.append(entity_txt)
                         bkrs_parts.append(parts)
                     else:
-                        # print("found co-manager")
                         comanagers.append(entity_txt)
                         cmgrs_parts.append(parts)
                 else:
                     bkrs.append(entity_txt)
                     bkrs_parts.append(parts)
 
-            if len(comanagers) == 1 or len(bkrs) == 0:
+            if (len(comanagers) == 1 and len(bkrs) == 0) or (len(bkrs) == 0):
                 bkrs = comanagers
                 bkrs_parts = cmgrs_parts
 
@@ -402,13 +399,14 @@ def search_bookrunner(df):
                 syndi_cmgrs.append(comanagers)
                 syndi_cmgrs_parts.append(cmgrs_parts)
 
-                isin_log = list(deal['표준코드'])
-                history.extend(isin_log)
                 print(f'Detected book runners:\n{bookrunners}, {bkr_parts}, {comanagers}, {cmgrs_parts}')
+            isin_log = list(deal['표준코드'])
+            history.extend(isin_log)
         my_scrapper.driver.quit()
 
         # print(f'Got book runners {history}')
         print(f'{df.shape[0] - len(history)} left')
+    print(len(syndicate), df.shape[0])
     df['bookrunners'] = syndicate
     df['bkr_parts'] = synd_part
     df['comanagers'] = syndi_cmgrs
