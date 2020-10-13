@@ -5,6 +5,7 @@ import re
 import ast
 import pandas as pd
 
+du = tools.ParseToolBox(env_type='pie')
 def test_get_company(df):
     companies = df.issuer_name.unique()
     for cpny in companies:
@@ -93,12 +94,19 @@ def test_parse_margin_rate(df):
 def test_parse_batch(data_fp):
     mp.parse_batch(data_fp, env_type='prd')
 
+def test_post_one_deal():
+    mp.post_one_deal('KR6001123A52', './data/json/pie_json', env_type='pie')
+
+def test_post_batch():
+    mp.post_batch('./data/json/pie_json', './data/dataframe/korea.xls', is_new_log=False, env_type='pie')
+
+
 
 
 if __name__ == "__main__":
-    du = tools.ParseToolBox(env_type='prd')
-    bkr_fp = './data/dataframe/test_bkr.csv'
-    df = du.load_bkr_df(bkr_fp)
+    # du = tools.ParseToolBox(env_type='pie')
+    # bkr_fp = './data/dataframe/bkr_new.csv'
+    # df = du.load_bkr_df(bkr_fp)
 
     # test_parse_time(df)
     # test_ann_price_date(df)
@@ -110,7 +118,9 @@ if __name__ == "__main__":
     # test_detect_tranche(df, bkr_fp)
     # test_parse_one_deal(bkr_fp)
 
-    test_parse_batch(bkr_fp)
+    # test_parse_batch(bkr_fp)
+    # test_post_one_deal()
+    test_post_batch()
     
     
     
