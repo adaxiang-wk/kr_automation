@@ -78,6 +78,7 @@ class Parser:
 
     def parse_one_tranche(self, record):
         is_float_rate = self.du.is_float(record['special_issuance_conditions'])
+        is_zero_coupon = pd.isnull(record['initial_interest_payment_date'])
 
         tranche_dict = self.tranche_format.copy()
         tranche_dict['MarketTypeId'] = 1 # Domestic market public issue by default
@@ -85,7 +86,11 @@ class Parser:
         tranche_dict['CharacteristicIds'] = None # default
         tranche_dict['IsInternationalMarket'] = False
 
-        tranche_dict['FirstCouponDate'] = self.du.parse_date(record['initial_interest_payment_date'])
+        if is_zero_coupon:
+            tranche_dict['FirstCouponDate'] = None
+        else:
+            tranche_dict['FirstCouponDate'] = self.du.parse_date(record['initial_interest_payment_date'])
+
         tranche_dict['InterestAccrualDate'] = self.du.parse_date(record['settlement_date'])
         tranche_dict['MaturityComplexDate'] = self.du.parse_mat_date(record['maturity_date'], record['coupon_rate'])
 
@@ -192,25 +197,3 @@ class Parser:
                 syndicate.append(one_synd)
 
         return syndicate
-
-
-if __name__ == "__main__":
-    pass
-    ### Test 
-    # format_fp = './dependencies/post_format.json'
-    # data_fp = './testing_files/bonds_testing_v1.csv'
-    # my_parser = Parser(format_fp=format_fp, data_fp=data_fp, file_type='csv')
-    # # my_parser.parse_one_deal(my_parser.data_df.iloc[17, :])
-
-    # # print((my_parser.data_df.loc[1, ['mat_date']].isnull()))
-    # # print(my_parser.data_df.columns)
-    # # my_parser.parse_one_deal(my_parser.data_df.iloc[1, :])
-    # # print(my_parser.parse_one_tranche(my_parser.data_df.iloc[0, :]))
-    # deals = my_parser.data_df
-    # for idx, deal in deals.iterrows():
-    #     # print(my_parser.parsed_history)
-    #     if deal['local_symbol'] in my_parser.parsed_history:
-    #         continue
-    #     tranches = my_parser.find_tranches(deal)
-    #     if tranches.shape[0] > 1:
-    #         print(tranches)

@@ -248,7 +248,7 @@ def json_dumper(parsed_dict, fp=''):
     return data
 
 
-def loging(isin, notes, idx):
+def parse_loging(isin, notes, idx):
     log_path = './logs/parse_log.csv'
     if os.path.exists(log_path):
         is_newlog = False
@@ -257,17 +257,34 @@ def loging(isin, notes, idx):
 
     if is_newlog:
         write_option = 'w'
-        with open('./logs/parse_log.csv', mode=write_option) as log_file:
+        with open('./logs/parse_log.csv', mode=write_option, encoding='UTF-8-sig') as log_file:
             log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if idx == 0:
-                log_writer.writerow(['isin', 'notes'])
+                log_writer.writerow(['isin', 'parse_notes'])
             else:
                 log_writer.writerow([isin, notes])
     else:
         write_option = 'a'
-        with open('./logs/parse_log.csv', mode=write_option) as log_file:
+        with open('./logs/parse_log.csv', mode=write_option, encoding='UTF-8-sig') as log_file:
             log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             log_writer.writerow([isin, notes])
+
+
+def post_loging(isin, deal_num, notes, log_fp):
+    if log_fp[-3:] == 'xls':
+        xls = pd.ExcelFile(log_fp)
+        log_df = pd.read_excel(xls, 'Sheet1')
+    else:
+        log_df = pd.read_csv(log_fp)
+
+    # log_df['deal_no'] = [0]*log_df.shape[0]
+    # log_df['notes'] = ['']*log_df.shape[0]
+
+    log_df.loc[log_df['ISIN'] == isin, ['deal_num']] = deal_num
+    log_df.loc[log_df['ISIN'] == isin, ['post_notes']] = notes 
+
+    log_df.to_csv('./logs/post_log.csv', index=False)
+
 
     
 
