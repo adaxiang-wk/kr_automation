@@ -25,7 +25,7 @@ def parse_batch(data_fp, env_type):
     print(f'{df.shape[0]} deals to parse')
     for idx, record in df.iterrows():
         isin = record['isin']
-        saved_fp = f'./data/json/pie_json/{isin}.json'
+        saved_fp = f'./data/json/pie_json2/{isin}.json'
         if os.path.exists(saved_fp):
             continue
 
@@ -92,4 +92,8 @@ def post_batch(json_fp, isin_ls_fp, is_new_log, env_type):
 
         if idx == 5:
             break
-    
+
+
+############################ update #############################
+def update_one_deal():
+    pass
