@@ -116,6 +116,7 @@ class Parser:
             tranche_dict['CouponPercentage'] = round(float(record['coupon_rate']), 2)
             tranche_dict['CouponFrequencyId'] = self.du.parse_cp_freq(record['interest_calculation_cycle_months'], 
                                                                     record['initial_interest_payment_date'])
+        tranche_dict['ISINs'] = [record['isin']]
         tranche_dict['GoverningLawIds'] = [681] # by default
         tranche_dict['ListingIds'] = [122] # by default
 
@@ -128,14 +129,6 @@ class Parser:
         return tranche_dict
 
         #print(self.tranche_dict)
-
-        
-    def parse_no_syndicate(self):
-        syndicate_dict = self.syndicate_format.copy()
-        syndicate_dict['Id'] = 141783 # ID for no bookrunner
-        syndicate_dict['BankTitleIds'] = [2]
-
-        return syndicate_dict
 
     
     def parse_one_syndicate(self, bk_name, bk_role, bk_part):
@@ -162,13 +155,20 @@ class Parser:
 
         return syndicate_dict
 
+    def parse_no_syndicate(self):
+        syndicate_dict = self.syndicate_format.copy()
+        syndicate_dict['Id'] = 141783 # ID for no bookrunner
+        syndicate_dict['BankTitleIds'] = [2]
+
+        return syndicate_dict
+
 
     def parse_syndicate(self, record):
         syndicate = []
 
         if record['bookrunners'] == []:
             self.note.append('no original book runner info')
-            return None 
+            return self.parse_no_syndicate() 
 
         if record['comanagers'] == []:
             cmgrs = []

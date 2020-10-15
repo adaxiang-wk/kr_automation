@@ -26,6 +26,20 @@ class ParseToolBox:
         
         return cleaned
 
+
+    def get_deal_info(self, deal_num):
+        url = self.data_env.GET_BASE_URL
+        json_f = self.data_env.auth_app.get(url+deal_num).json()
+        return json_f
+
+
+    def _search_company(self, search_phrase):
+        url = f'https://company-entryapi-prd.weu.svc.origination.colocation.ase.dlgroup.com/v2/Company/{search_phrase}'
+        result = self.data_env.auth_app.get(url).json()
+
+        return result
+
+
     
     def _get_reference(self, ref_name, ref_type='DCM'):
     
@@ -34,6 +48,7 @@ class ParseToolBox:
         else:
             url = self.data_env.REF_BASE_URL + f'{ref_type}/{ref_name}'
 
+        print(self.data_env.auth_app.get(url))
         ref = self.data_env.auth_app.get(url).json()
         ref_df = pd.json_normalize(ref)
 
@@ -68,6 +83,8 @@ class ParseToolBox:
         """
         
         url = f'{self.data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
+        print(self.data_env.auth_app.get(url).content)
+        print(search_phrase)
         found = self.data_env.auth_app.get(url).json()
 
         # while len(found) < 1:
