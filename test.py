@@ -104,9 +104,10 @@ def test_post_batch():
 
 
 if __name__ == "__main__":
-    du = tools.ParseToolBox(env_type='pie')
-    bkr_fp = './data/dataframe/test_bkr.csv'
-    df = du.load_bkr_df(bkr_fp)
+    du = tools.ParseToolBox(env_type='prd')
+    # print(du._search_company('bank of china'))
+    bkr_fp = './data/dataframe/bkr_new.csv'
+    # df = du.load_bkr_df(bkr_fp)
 
     # print(du._search_company('1223240'))
 
@@ -121,8 +122,8 @@ if __name__ == "__main__":
     # test_detect_tranche(df, bkr_fp)
     # test_parse_one_deal(bkr_fp)
 
-    # test_parse_batch(bkr_fp)
-    test_post_one_deal()
+    test_parse_batch(bkr_fp)
+    # test_post_one_deal()
     # test_post_batch()
     
     

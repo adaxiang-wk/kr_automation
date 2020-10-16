@@ -12,7 +12,8 @@ import envSetter.env_config as ec
 
 class ParseToolBox:
     def __init__(self, env_type):
-        self.data_env = ec.EnvConfig(env_type=env_type)
+        # self.data_env = ec.EnvConfig(env_type=env_type)
+        self.env_type = env_type
 
 
     def _clean_bkr(self, bkr):
@@ -27,29 +28,43 @@ class ParseToolBox:
         return cleaned
 
 
+    def check_participation(self, issue_size, bkr_parts, cmgr_parts):
+        if bkr_parts == []:
+            return True
+
+
+        bkr_parts_sum = sum(bkr_parts)
+        cmgr_parts_sum = sum(cmgr_parts)
+
+        total = bkr_parts_sum + cmgr_parts_sum
+
+        return total == issue_size
+
+
     def get_deal_info(self, deal_num):
-        url = self.data_env.GET_BASE_URL
-        json_f = self.data_env.auth_app.get(url+deal_num).json()
+        data_env = ec.EnvConfig(self.env_type, 'dcm')
+        url = data_env.GET_BASE_URL
+        json_f = data_env.auth_app.get(url+deal_num).json()
         return json_f
 
 
-    def _search_company(self, search_phrase):
-        url = f'https://company-entryapi-prd.weu.svc.origination.colocation.ase.dlgroup.com/v2/Company/{search_phrase}'
-        result = self.data_env.auth_app.get(url).json()
+    # def _search_company(self, search_phrase):
+    #     data_env = ec.EnvConfig(self.env_type, 'company')
+    #     url = f'https://company-entryapi-prd.weu.svc.origination.colocation.ase.dlgroup.com/v2/Company/{search_phrase}'
+    #     result = data_env.auth_app.get(url).json()
 
-        return result
+    #     return result
 
 
     
     def _get_reference(self, ref_name, ref_type='DCM'):
-    
+        data_env = ec.EnvConfig(self.env_type, 'reference')
         if len(ref_type) == 0:
-            url = self.data_env.REF_BASE_URL + ref_name
+            url = data_env.REF_BASE_URL + ref_name
         else:
-            url = self.data_env.REF_BASE_URL + f'{ref_type}/{ref_name}'
+            url = data_env.REF_BASE_URL + f'{ref_type}/{ref_name}'
 
-        print(self.data_env.auth_app.get(url))
-        ref = self.data_env.auth_app.get(url).json()
+        ref = data_env.auth_app.get(url).json()
         ref_df = pd.json_normalize(ref)
 
         return ref_df
@@ -81,11 +96,9 @@ class ParseToolBox:
             - search_phrase
             _ is_active: whether the company is marked "activate" in the database
         """
-        
-        url = f'{self.data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
-        print(self.data_env.auth_app.get(url).content)
-        print(search_phrase)
-        found = self.data_env.auth_app.get(url).json()
+        data_env = ec.EnvConfig(self.env_type, 'company')
+        url = f'{data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
+        found = data_env.auth_app.get(url).json()
 
         # while len(found) < 1:
         #     print(f"wrong search phrase: {search_phrase}")
@@ -301,6 +314,7 @@ def post_loging(isin, deal_num, notes, log_fp):
     log_df.loc[log_df['ISIN'] == isin, ['post_notes']] = notes 
 
     log_df.to_csv('./logs/post_log.csv', index=False)
+
 
 
     
