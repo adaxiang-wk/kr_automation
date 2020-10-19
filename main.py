@@ -8,8 +8,8 @@ if __name__ == "__main__":
     end_date = 20200930
 
     isin_fp = './data/dataframe/korea.xls'
-    general_info_fp = './data/dataframe/gi_df.csv'
-    bkr_fp = './data/dataframe/bkr_new.csv'
+    general_info_fp = './data/dataframe/gi_df2.csv'
+    bkr_fp = './data/dataframe/bkr_new2.csv'
 
     # gi_scrapper = gi.Scrapper()
     # gi_scrapper.scrap_list_of_deals(isin_fp, general_info_fp)
