@@ -166,7 +166,7 @@ class Parser:
 
         if record['bookrunners'] == []:
             self.note.append('no original book runner info')
-            return self.parse_no_syndicate() 
+            return [self.parse_no_syndicate()] 
 
         if record['comanagers'] == []:
             cmgrs = []

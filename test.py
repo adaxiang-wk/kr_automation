@@ -5,7 +5,7 @@ import re
 import ast
 import pandas as pd
 
-# du = tools.ParseToolBox(env_type='prd')
+du = tools.ParseToolBox(env_type='prd')
 def test_get_company(df):
     companies = df.issuer_name.unique()
     for cpny in companies:
@@ -98,13 +98,13 @@ def test_post_one_deal():
     mp.post_one_deal('KR6004021A75', './data/json/pie_json', env_type='pie')
 
 def test_post_batch():
-    mp.post_batch('./data/json/pie_json', './data/dataframe/korea.xls', is_new_log=False, env_type='pie')
+    mp.post_batch('./data/json/pie_json2', './data/dataframe/korea.xls', is_new_log=False, env_type='pie')
 
 
 
 
 if __name__ == "__main__":
-    du = tools.ParseToolBox(env_type='prd')
+    # du = tools.ParseToolBox(env_type='pie')
     # print(du._search_company('bank of china'))
     bkr_fp = './data/dataframe/bkr_new.csv'
     # df = du.load_bkr_df(bkr_fp)
@@ -122,9 +122,9 @@ if __name__ == "__main__":
     # test_detect_tranche(df, bkr_fp)
     # test_parse_one_deal(bkr_fp)
 
-    test_parse_batch(bkr_fp)
+    # test_parse_batch(bkr_fp)
     # test_post_one_deal()
-    # test_post_batch()
+    test_post_batch()
     
     
     
