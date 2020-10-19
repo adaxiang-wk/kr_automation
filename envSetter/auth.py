@@ -34,26 +34,29 @@ AUTHORITY = "https://login.microsoftonline.com/DEALOGIC.onmicrosoft.com"
 
 """ This is the authenticated app object, that does the authentication """
 class Authenticator():
-    def __init__(self, env_name):
+    def __init__(self, env_name, section):
         self.env_name = env_name
-        self.scopes = self.get_scopes(env_name)
-        self.app = self.initialize_auth(env_name=env_name)
+        self.section = section
+        self.scopes = [f"api://origination-{self.section}entryapi-{self.env_name}/.default"]
+        self.app = self.initialize_auth()
 
-    def get_secret_id(self, env_name):
-        if env_name == 'pie':
+
+    def get_secret_id(self):
+        if self.env_name == 'pie':
             clientId = '5400d1f6-0f5e-4fe4-a0b1-8171abf4b86d'
             clientSecret = 'rg1l@97u8@-Q=iIX.o?xP@sHL/C/u2th'
         else:
-            clientId = '41a80cdd-6771-4190-af0f-5671ab236c14'
-            clientSecret = 'mOg5lYnTsu0N/U7pnGHOgxwe[ub/1w.B'
-        return clientId, clientSecret
+            if self.section == 'loan':
+                clientId = '41a80cdd-6771-4190-af0f-5671ab236c14'
+                clientSecret = 'mOg5lYnTsu0N/U7pnGHOgxwe[ub/1w.B'
+            elif self.section == 'dcm':
+                clientId = 'f688fdcb-671a-406d-b3f8-9e6dbeff84d6'
+                clientSecret = 'ENeZ2Q6e9-.LY6C~81ixIpT881Id_TV1RI'
+            else:
+                clientId = 'f688fdcb-671a-406d-b3f8-9e6dbeff84d6'
+                clientSecret = 'ENeZ2Q6e9-.LY6C~81ixIpT881Id_TV1RI'
 
-    def get_scopes(self, env_name):
-        if env_name == 'pie':
-            scopes = ["api://origination-dcmentryapi-pie/.default"]
-        else:
-            scopes = ["api://origination-dcmentryapi-prd/.default"]
-        return scopes
+        return clientId, clientSecret
 
 
     def get(self, url, getToken = True):
@@ -121,7 +124,7 @@ class Authenticator():
         return headers
 
 
-    def initialize_auth(self, env_name):
+    def initialize_auth(self):
         """
         Initializes the authentication app based on the id and the client credentials against the authority
 
@@ -130,7 +133,7 @@ class Authenticator():
             client_id (str): id of the app (registered in the azure ad)
             credentials (str): the client secret of the app
         """
-        clientId, clientSecret = self.get_secret_id(env_name)
+        clientId, clientSecret = self.get_secret_id()
 
         authapp = ConfidentialClientApplication(client_id=clientId
             , authority=AUTHORITY
@@ -173,5 +176,5 @@ class Authenticator():
 if __name__ == "__main__":
     # app = initialize_auth(scope='pie')
     # print(app)
-    my_auth = Authenticator(env_name='pie')
+    my_auth = Authenticator(env_name='pie', section='dcm')
     print(my_auth.app)

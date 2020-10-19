@@ -122,6 +122,7 @@ class Parser:
 
         tranche_dict['Syndicate'] = self.parse_syndicate(record)
 
+
         # bkrs = record['bookrunners']
 
 
@@ -139,12 +140,9 @@ class Parser:
         elif bk_role == 'comanager':
             title_id = 8
 
-        if bk_part == '-':
-            participation = None
-        else:
-            participation = self.du.parse_money(bk_part)
         
-
+        participation = bk_part
+        
         syndi_id = self.du.get_company_info(bk_name)
         if syndi_id < 0:
             self.note.append(f'cannot find syndicate bank id {bk_name}')
@@ -168,18 +166,27 @@ class Parser:
 
         if record['bookrunners'] == []:
             self.note.append('no original book runner info')
-            return self.parse_no_syndicate() 
+            return [self.parse_no_syndicate()] 
 
         if record['comanagers'] == []:
             cmgrs = []
             cmgr_parts = []
         else:
             cmgrs = record['comanagers']
-            cmgr_parts =  ast.literal_eval(record['cmgr_parts'])
+            cmgr_parts_str =  ast.literal_eval(record['cmgr_parts'])
+            cmgr_parts = list(map(lambda x: round(int(x.replace(',', '')) / 1000000, 2) if x != '-' else 0, cmgr_parts_str))
 
 
         bkrs = record['bookrunners']
-        bkr_parts =  ast.literal_eval(record['bkr_parts'])
+        bkr_parts_str =  ast.literal_eval(record['bkr_parts'])
+        bkr_parts = list(map(lambda x: round(int(x.replace(',', '')) / 1000000, 2) if x != '-' else 0, bkr_parts_str))
+
+        issue_size = self.du.parse_money(record['issue_size'])
+
+        is_matched = self.du.check_participation(issue_size, bkr_parts, cmgr_parts)
+        if is_matched == False:
+            self.note.append('participation value not matched with issue size')
+
 
         bkr_dict = {name: part for name, part in zip(bkrs, bkr_parts)}
         if len(cmgrs) > 0:
@@ -188,12 +195,21 @@ class Parser:
             cmgr_dict = {}
 
         for name, part in bkr_dict.items():
+            if is_matched == False:
+                part = None
             one_synd = self.parse_one_syndicate(name, 'bookrunner', part)
             syndicate.append(one_synd)
 
         if len(cmgr_dict) > 0:
             for name, part in cmgr_dict.items():
+                if is_matched == False:
+                    part = None
                 one_synd = self.parse_one_syndicate(name, 'comanager', part)
                 syndicate.append(one_synd)
+
+        # part_sum = sum(all_parts)
+        # issue_size = self.du.parse_money(record['issue_size'])
+        # is_matched = (part_sum == issue_size)
+
 
         return syndicate

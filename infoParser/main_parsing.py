@@ -47,7 +47,7 @@ def parse_batch(data_fp, env_type):
 ############################ post json #############################
 def post_one_deal(isin, json_fp, env_type):
     before_post = os.path.join(json_fp, f'{isin}.json')
-    post_env = ec.EnvConfig(env_type=env_type)
+    post_env = ec.EnvConfig(env_type=env_type, section='dcm')
     notes = ''
 
     with open(before_post) as f:
