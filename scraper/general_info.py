@@ -10,7 +10,7 @@ class Scrapper:
         driver_path = r'/Users/AdaXiang/geckodriver'
         self.driver = webdriver.Firefox(executable_path=driver_path)
         self.base_url = 'https://isin.krx.co.kr/srch/srch.do?method=srchList'
-        self.start_data = start_date
+        self.start_date = start_date
         self.end_date = end_date
 
 
@@ -23,11 +23,11 @@ class Scrapper:
 
         start_date_input = self.driver.find_element_by_id("std_cd_grnt_start_dd")
         start_date_input.clear()
-        start_date_input.send_keys(start_date)
+        start_date_input.send_keys(self.start_date)
 
         end_date_input = self.driver.find_element_by_id("std_cd_grnt_end_dd")
         end_date_input.clear()
-        end_date_input.send_keys(end_date)
+        end_date_input.send_keys(self.end_date)
 
         # submit & search
         self.driver.find_element_by_link_text('조회').click()
@@ -82,7 +82,7 @@ class Scrapper:
         xls = pd.ExcelFile(file_fp)
         data = pd.read_excel(xls, 'Sheet1')
 
-        isin_list = list(data['ISIN'])[81:101]
+        isin_list = list(data['ISIN'])[101:201]
         print(f'Total {len(isin_list)} records to scrap')
 
         dfs = []
