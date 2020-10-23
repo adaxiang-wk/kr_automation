@@ -72,7 +72,9 @@ class Parser:
             tranche_dict = self.parse_one_tranche(row)
             tranche_list.append(tranche_dict)
 
+        new_added_isins = list(tranche_df['isin'])
         self.deal_dict['Tranches'] = tranche_list
+        return new_added_isins
         
 
 
@@ -184,8 +186,8 @@ class Parser:
         issue_size = self.du.parse_money(record['issue_size'])
 
         is_matched = self.du.check_participation(issue_size, bkr_parts, cmgr_parts)
-        if is_matched == False:
-            self.note.append('participation value not matched with issue size')
+        # if is_matched == False:
+        #     self.note.append('participation value not matched with issue size')
 
 
         bkr_dict = {name: part for name, part in zip(bkrs, bkr_parts)}

@@ -4,6 +4,8 @@ import infoParser.main_parsing as mp
 import re
 import ast
 import pandas as pd
+from googletrans import Translator
+
 
 du = tools.ParseToolBox(env_type='prd')
 def test_get_company(df):
@@ -70,13 +72,15 @@ def test_detect_tranche(df, data_fp):
         print(one_deal)
 
 
-def test_parse_one_deal(data_fp):
+def test_parse_one_deal(data_fp, isin):
     my_parser = ipsr.Parser(data_fp, env_type='prd')
-    record = my_parser.data_df.iloc[1, :]
+    df = my_parser.data_df
+    record = df.loc[df['isin'] == isin, :].iloc[0]
+    print(record)
     my_parser.parse_one_deal(record)
     parsed = my_parser.deal_dict
 
-    isin = record['isin']
+    # isin = record['isin']
     tools.json_dumper(parsed, f'{isin}.json')
     
     print(isin)
@@ -92,13 +96,28 @@ def test_parse_margin_rate(df):
 
 
 def test_parse_batch(data_fp):
-    mp.parse_batch(data_fp, env_type='prd')
+    mp.parse_batch(data_fp, env_type='prd', output_dir='./data/json/pie_json3/', log_fp='./logs/parse_log3.csv')
 
 def test_post_one_deal():
-    mp.post_one_deal('KR6004021A75', './data/json/pie_json', env_type='pie')
+    mp.post_one_deal('KR6000011A83', './data/json/pie_json2', env_type='pie')
 
 def test_post_batch():
-    mp.post_batch('./data/json/pie_json2', './data/dataframe/korea.xls', is_new_log=False, env_type='pie')
+    mp.post_batch('./data/json/pie_json3', './logs/parse_log3.csv', is_new_log=True, env_type='pie')
+
+
+def translate():
+    translator = Translator() 
+    print(translator.translate('케이티비투자증권').text)
+
+def test_search_company():
+    company_list = ['디에스투자증권', '엔에이치투자증권', '우리은행']
+    for company in company_list:
+        print(du._search_company(company))
+
+
+def test_company(name):
+    idx = du.get_company_info(name)
+    print(idx)
 
 
 
@@ -106,7 +125,7 @@ def test_post_batch():
 if __name__ == "__main__":
     # du = tools.ParseToolBox(env_type='pie')
     # print(du._search_company('bank of china'))
-    bkr_fp = './data/dataframe/bkr_new.csv'
+    bkr_fp = './data/dataframe/bkr_new2.csv'
     # df = du.load_bkr_df(bkr_fp)
 
     # print(du._search_company('1223240'))
@@ -120,11 +139,17 @@ if __name__ == "__main__":
 
     # test_parse_syndicate(df, bkr_fp)
     # test_detect_tranche(df, bkr_fp)
-    # test_parse_one_deal(bkr_fp)
+    # test_parse_one_deal(bkr_fp, 'KR6010121A55')
 
     # test_parse_batch(bkr_fp)
     # test_post_one_deal()
-    test_post_batch()
-    
+    # test_post_batch()
+
+    # translate()
+    # test_search_company()
+    # ls = ['한국투자증권', '케이비증권', '신한금융투자', '미래에셋대우', '엔에이치투자증권', '신한금융투자', '한국투자증권', '엔에이치투자증권', '미래에셋대우']
+    # for l in ls:
+    #     test_company(l)
+    test_company('NH투자증권')
     
     
