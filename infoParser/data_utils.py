@@ -6,8 +6,13 @@ from datetime import datetime, timedelta
 import numpy as np
 import csv
 import os
+from googletrans import Translator
 
 import envSetter.env_config as ec
+
+
+with open('./dependencies/company_dict.json', encoding='UTF-8-sig') as js_file:
+    BANKS_DICT = json.load(js_file)
 
 
 class ParseToolBox:
@@ -47,15 +52,6 @@ class ParseToolBox:
         json_f = data_env.auth_app.get(url+deal_num).json()
         return json_f
 
-
-    # def _search_company(self, search_phrase):
-    #     data_env = ec.EnvConfig(self.env_type, 'company')
-    #     url = f'https://company-entryapi-prd.weu.svc.origination.colocation.ase.dlgroup.com/v2/Company/{search_phrase}'
-    #     result = data_env.auth_app.get(url).json()
-
-    #     return result
-
-
     
     def _get_reference(self, ref_name, ref_type='DCM'):
         data_env = ec.EnvConfig(self.env_type, 'reference')
@@ -76,7 +72,7 @@ class ParseToolBox:
         bkr_df['bookrunners'] = bkr_df['bookrunners'].apply(lambda x: self._clean_bkr(x))
         bkr_df['comanagers'] = bkr_df['comanagers'].apply(lambda x: self._clean_bkr(x))
         
-        with open('./dependencies/kr_eng_translation.json', encoding='UTF-8-sig') as js_file:
+        with open('./dependencies/field_dict.json', encoding='UTF-8-sig') as js_file:
             translation = json.load(js_file)
         
         translated_df = bkr_df.rename(columns=translation)
@@ -88,6 +84,20 @@ class ParseToolBox:
 
 
     ######################## SEARCH COMPANY ########################
+    def search_in_dict(self, search_phrase):
+        if search_phrase in BANKS_DICT.keys():
+            search_phrase = BANKS_DICT[search_phrase]
+        else:
+            translator = Translator()
+            translated = str(translator.translate(search_phrase).text)
+            BANKS_DICT.update({search_phrase: translated})
+            with open('./dependencies/company_dict.json', "w", encoding='UTF-8-sig') as outfile:  
+                json.dump(BANKS_DICT, outfile, ensure_ascii=False)
+            search_phrase = translated
+
+        return search_phrase 
+
+
     def _search_company(self, search_phrase, is_active='true'):
         """
         Search company id with given search phrase
@@ -96,28 +106,35 @@ class ParseToolBox:
             - search_phrase
             _ is_active: whether the company is marked "activate" in the database
         """
+        if len(search_phrase) <= 2:
+            search_phrase = self.search_in_dict(search_phrase)
+        
         data_env = ec.EnvConfig(self.env_type, 'company')
         url = f'{data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
         found = data_env.auth_app.get(url).json()
 
-        # while len(found) < 1:
-        #     print(f"wrong search phrase: {search_phrase}")
-        #     search_phrase = search_phrase[:-1]
-        #     print(f"try new search_phrase: {search_phrase}")
-        #     url = f'{data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
-        #     found = data_env.auth_app.get(url).json()
         if len(found) < 1:
-            candidates = None
+            search_phrase = self.search_in_dict(search_phrase)
+            url = f'{data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
+            found = data_env.auth_app.get(url).json()
+            if len(found) < 1:
+                candidates = None
+            else:
+                candidates = pd.json_normalize(found)
         else:
             candidates = pd.json_normalize(found)
+        
         return candidates
 
 
     def _filter_search_result(self, full_name, candidates, countryID=119):
+        
         if countryID > 0:
             company = candidates[candidates['NationalityOfBusinessId'] == countryID]
         else:
             company = candidates
+
+        print(full_name)
 
         if company.shape[0] < 1:
             raise ValueError(f"cannot find companies with given countryID = {countryID}")
@@ -126,8 +143,8 @@ class ParseToolBox:
             chosen = company.loc[company['ProperName'] == full_name, :]
 
             if chosen.shape[0] != 1:
-                # company = company.iloc[0, :] seems to be the one that got deleted
-                chosen = company.iloc[[-1], :]
+                chosen = company.iloc[[0], :] 
+                # chosen = company.iloc[[-1], :]
         # print(chosen)
         return chosen
 
@@ -278,26 +295,33 @@ def json_dumper(parsed_dict, fp=''):
     return data
 
 
-def parse_loging(isin, notes, idx):
-    log_path = './logs/parse_log.csv'
-    if os.path.exists(log_path):
+def parse_loging(isins, notes, idx, log_fp):
+    if os.path.exists(log_fp):
         is_newlog = False
     else:
         is_newlog = True
 
     if is_newlog:
         write_option = 'w'
-        with open('./logs/parse_log.csv', mode=write_option, encoding='UTF-8-sig') as log_file:
+        with open(log_fp, mode=write_option, encoding='UTF-8-sig') as log_file:
             log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if idx == 0:
-                log_writer.writerow(['isin', 'parse_notes'])
+                log_writer.writerow(['isin', 'tranches in same deal', 'parse_notes'])
+
+            if len(isins) > 1:
+                for isin in isins:
+                    log_writer.writerow([isin, isins[0], notes])
             else:
-                log_writer.writerow([isin, notes])
+                log_writer.writerow([isins[0], isins[0], notes])
     else:
         write_option = 'a'
-        with open('./logs/parse_log.csv', mode=write_option, encoding='UTF-8-sig') as log_file:
+        with open(log_fp, mode=write_option, encoding='UTF-8-sig') as log_file:
             log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            log_writer.writerow([isin, notes])
+            if len(isins) > 1:
+                for isin in isins:
+                    log_writer.writerow([isin, isins[0], notes])
+            else:
+                log_writer.writerow([isins[0], isins[0], notes])
 
 
 def post_loging(isin, deal_num, notes, log_fp):
@@ -310,10 +334,10 @@ def post_loging(isin, deal_num, notes, log_fp):
     # log_df['deal_no'] = [0]*log_df.shape[0]
     # log_df['notes'] = ['']*log_df.shape[0]
 
-    log_df.loc[log_df['ISIN'] == isin, ['deal_num']] = deal_num
-    log_df.loc[log_df['ISIN'] == isin, ['post_notes']] = notes 
+    log_df.loc[log_df['isin'] == isin, ['deal_num']] = deal_num
+    log_df.loc[log_df['isin'] == isin, ['post_notes']] = notes 
 
-    log_df.to_csv('./logs/post_log.csv', index=False)
+    log_df.to_csv('./logs/post_log3.csv', index=False)
 
 
 

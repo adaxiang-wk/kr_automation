@@ -18,14 +18,14 @@ def parse_one_deal(data_fp, env_type, deal_idx):
     print(f'parsed {isin}')
 
 
-def parse_batch(data_fp, env_type):
+def parse_batch(data_fp, env_type, output_dir, log_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
 
     print(f'{df.shape[0]} deals to parse')
     for idx, record in df.iterrows():
         isin = record['isin']
-        saved_fp = f'./data/json/pie_json2/{isin}.json'
+        saved_fp = os.path.join(output_dir, f'{isin}.json')
         if os.path.exists(saved_fp):
             continue
 
@@ -33,14 +33,14 @@ def parse_batch(data_fp, env_type):
             continue
 
         print(f"Parsing {isin}")
-        my_parser.parse_one_deal(record)
+        parsed_isins = my_parser.parse_one_deal(record)
         parsed = my_parser.deal_dict
 
        
         du.json_dumper(parsed, saved_fp)
-        du.parse_loging(isin, my_parser.note, idx)
+        du.parse_loging(parsed_isins, my_parser.note, idx, log_fp)
         print(my_parser.note)
-        print(f'parsed {isin}, {df.shape[0] - idx -1} left')
+        print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
         my_parser.note = []
 
 
@@ -85,13 +85,13 @@ def post_batch(json_fp, isin_ls_fp, is_new_log, env_type):
             if idx == 0:
                 log_fp = isin_ls_fp
             else:
-                log_fp = './logs/post_log.csv'
+                log_fp = './logs/post_log3.csv'
         else:
-            log_fp = './logs/post_log.csv'
+            log_fp = './logs/post_log3.csv'
         du.post_loging(isin, deal_num, notes, log_fp)
 
-        if idx == 5:
-            break
+        # if idx == 5:
+        #     break
 
 
 ############################ update #############################
