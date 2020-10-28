@@ -82,7 +82,7 @@ class Scrapper:
         xls = pd.ExcelFile(file_fp)
         data = pd.read_excel(xls, 'Sheet1')
 
-        isin_list = list(data['ISIN'])[101:201]
+        isin_list = list(data['ISIN'])
         print(f'Total {len(isin_list)} records to scrap')
 
         dfs = []
@@ -92,8 +92,11 @@ class Scrapper:
 
             print(f'Scraped {isin}, {len(isin_list) - idx -1} left')
 
-        final_df = pd.concat(dfs, axis=0)
+            if idx % 10 == 0:
+                final_df = pd.concat(dfs, axis=0)
+                final_df.to_csv(saving_path, index=False)
 
+        final_df = pd.concat(dfs, axis=0)
         final_df.to_csv(saving_path, index=False)
 
 

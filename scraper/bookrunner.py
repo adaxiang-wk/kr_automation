@@ -9,6 +9,7 @@ import sys
 import pandas as pd 
 from datetime import datetime, timedelta
 import re
+import csv
 
 th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사']
 bank_roles = ['대표', '인수', '대표주관회사']
@@ -225,7 +226,7 @@ class Scrapper:
             # if len(th) == 0:
             print('cannot find bookrunner tables in prospectus')
             return ([], [], [], [])
-        elif len(th) == 1 and tranche_num > 0:
+        elif tranche_num > len(th)-1:
             print('not a tranche')
             return 'not a tranche'
         else:
@@ -342,7 +343,7 @@ def preprocess(input_fp, sort=True, save=False):
     return df
             
                 
-def search_bookrunner(df):
+def search_bookrunner(df, save_fp):
     print(f'Total {df.shape[0]} records')
     history = []
     syndicate = []
@@ -350,7 +351,7 @@ def search_bookrunner(df):
 
     syndi_cmgrs = []
     syndi_cmgrs_parts = []
-    for _, record in df.iterrows():
+    for idx, record in df.iterrows():
         if record['표준코드'] in history:
             continue
         my_scrapper = Scrapper()
@@ -367,6 +368,7 @@ def search_bookrunner(df):
         deal = detect_tranches(record, df)
         # isin_log = list(deal['표준코드'])
         # history.extend(isin_log)
+        print(deal)
 
         company_name = re.sub(r"[\(\[].*?[\)\]]", "", record['발행기관명'])
         
@@ -378,7 +380,7 @@ def search_bookrunner(df):
             for tranch_idx, tranche in deal.iterrows():
                 bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
                 if bookrunner_info == 'not a tranche':
-                    continue
+                    break
                 bookrunners, bkr_parts, comanagers, cmgrs_parts = bookrunner_info[0], bookrunner_info[1], bookrunner_info[2], bookrunner_info[3]
                 syndicate.append(bookrunners)
                 synd_part.append(bkr_parts)
@@ -387,8 +389,14 @@ def search_bookrunner(df):
 
                 history.append(tranche['표준코드'])
                 print(f'Detected book runners:\n{bookrunners}, {bkr_parts}, {comanagers}, {cmgrs_parts}')
+                content_list = list(tranche.values)[1:]
+                content_list.append(bookrunners)
+                content_list.append(bkr_parts)
+                content_list.append(comanagers)
+                content_list.append(cmgrs_parts)
+                write_csv(content_list, save_fp)
         else:
-            for _ in range(deal.shape[0]):
+            for tranch_idx, tranche in deal.iterrows():
                 bookrunners = [[]]
                 bkr_parts = [[]]
                 comanagers = [[]]
@@ -400,20 +408,43 @@ def search_bookrunner(df):
                 syndi_cmgrs_parts.append(cmgrs_parts)
 
                 print(f'Detected book runners:\n{bookrunners}, {bkr_parts}, {comanagers}, {cmgrs_parts}')
-            isin_log = list(deal['표준코드'])
-            history.extend(isin_log)
+                content_list = list(tranche.values)[1:]
+                content_list.append(bookrunners)
+                content_list.append(bkr_parts)
+                content_list.append(comanagers)
+                content_list.append(cmgrs_parts)
+                write_csv(content_list, save_fp)
+                history.append(tranche['표준코드'])
+            # isin_log = list(deal['표준코드'])
+            # history.extend(isin_log)
         my_scrapper.driver.quit()
 
         # print(f'Got book runners {history}')
         print(f'{df.shape[0] - len(history)} left')
-    print(len(syndicate), df.shape[0])
+        print(len(syndicate), df.shape[0])
+        # if idx % 10 == 0:
+        #     df['bookrunners'] = syndicate
+        #     df['bkr_parts'] = synd_part
+        #     df['comanagers'] = syndi_cmgrs
+        #     df['cmgr_parts'] = syndi_cmgrs_parts
+
+        #     df.to_csv('save_fp', index=False)
+
+    
     df['bookrunners'] = syndicate
     df['bkr_parts'] = synd_part
     df['comanagers'] = syndi_cmgrs
     df['cmgr_parts'] = syndi_cmgrs_parts
-        
+    
+    df.to_csv(save_fp, index=False)
 
     return df
+
+
+def write_csv(content_list, save_fp):
+    with open(save_fp, mode='a', encoding='UTF-8-sig') as log_file:
+        log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        log_writer.writerow(content_list)
 
         
 
