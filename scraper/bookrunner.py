@@ -14,6 +14,15 @@ import csv
 th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사']
 bank_roles = ['대표', '인수', '대표주관회사']
 
+company_name_dict = {
+    '비엔케이캐피탈': 'BNK캐피탈',
+    '오릭스캐피탈코리아주식회사': '오릭스캐피탈코리아',
+    'JB 우리캐피탈': '제이비우리캐피탈',
+    '지에스에너지': 'GS에너지',
+    'DGB캐피탈': '디지비캐피탈',
+    '케이티': 'KT'
+}
+
 
 class Scrapper:
     def __init__(self):
@@ -227,8 +236,10 @@ class Scrapper:
             print('cannot find bookrunner tables in prospectus')
             return ([], [], [], [])
         elif tranche_num > len(th)-1:
-            print('not a tranche')
-            return 'not a tranche'
+            print("number of tables: ", len(th))
+            print("current tranche number", tranche_num)
+            print('same table')
+            return 'same table'
         else:
             bookrunner_table = th[tranche_num].find_parent('table')
             html_content = str(bookrunner_table)
@@ -318,13 +329,29 @@ def extract_identifier(evt_num):
     return re.sub(r"[\(\[].*?[\)\]]", "", identifier)
 
 
+# def detect_tranches(record, df):
+#     cpny_name = record['발행기관명']
+#     date = record['상장일']
+
+#     deal = df[(df['발행기관명'] == cpny_name) & (df['상장일'] == date)].reset_index()
+
+#     return deal
+
 def detect_tranches(record, df):
-    cpny_name = record['발행기관명']
-    date = record['상장일']
+    issuer_name = record['발행기관명']
+    listing_date = record['상장일']
+    id1 = record['identifier1']
+    id1 = ''.join(id1.split('-')[:-1])
+    
 
-    deal = df[(df['발행기관명'] == cpny_name) & (df['상장일'] == date)].reset_index()
-
-    return deal
+    # from the candidates (all having same issuer as the record)
+    # find the ones with the same listing date
+    candicates = df[df['발행기관명'] == issuer_name].copy()
+    filtered = candicates.loc[candicates['상장일'] == listing_date, :].copy()
+    filtered['id'] = filtered['identifier1'].apply(lambda x: ''.join(x.split('-')[:-1])).copy()
+    one_deal = filtered.loc[filtered['id'] == id1, :].drop(['id'], axis=1)
+    
+    return one_deal
 
 
 def preprocess(input_fp, sort=True, save=False):
@@ -344,6 +371,7 @@ def preprocess(input_fp, sort=True, save=False):
             
                 
 def search_bookrunner(df, save_fp):
+    df = df.iloc[:119, :]
     print(f'Total {df.shape[0]} records')
     history = []
     syndicate = []
@@ -366,11 +394,15 @@ def search_bookrunner(df, save_fp):
         endDate_str = end_time.strftime("%Y%m%d")
 
         deal = detect_tranches(record, df)
+        deal = deal.reset_index()
         # isin_log = list(deal['표준코드'])
         # history.extend(isin_log)
-        print(deal)
+        # print(deal)
 
         company_name = re.sub(r"[\(\[].*?[\)\]]", "", record['발행기관명'])
+        if company_name in company_name_dict.keys():
+            company_name = company_name_dict[company_name]
+            print('searched using name in provided dict')
         
         identifier = [record['identifier1'], record['identifier2']]
 
@@ -379,8 +411,10 @@ def search_bookrunner(df, save_fp):
         if report is not None:
             for tranch_idx, tranche in deal.iterrows():
                 bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
-                if bookrunner_info == 'not a tranche':
-                    break
+                if bookrunner_info != 'same table':
+                    prev_bookrunner = bookrunner_info
+                else:
+                    bookrunner_info = prev_bookrunner
                 bookrunners, bkr_parts, comanagers, cmgrs_parts = bookrunner_info[0], bookrunner_info[1], bookrunner_info[2], bookrunner_info[3]
                 syndicate.append(bookrunners)
                 synd_part.append(bkr_parts)
@@ -421,7 +455,7 @@ def search_bookrunner(df, save_fp):
 
         # print(f'Got book runners {history}')
         print(f'{df.shape[0] - len(history)} left')
-        print(len(syndicate), df.shape[0])
+        # print(len(syndicate), df.shape[0])
         # if idx % 10 == 0:
         #     df['bookrunners'] = syndicate
         #     df['bkr_parts'] = synd_part
