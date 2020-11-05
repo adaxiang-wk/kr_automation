@@ -14,6 +14,15 @@ import csv
 th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사']
 bank_roles = ['대표', '인수', '대표주관회사']
 
+company_name_dict = {
+    '비엔케이캐피탈': 'BNK캐피탈',
+    '오릭스캐피탈코리아주식회사': '오릭스캐피탈코리아',
+    'JB 우리캐피탈': '제이비우리캐피탈',
+    '지에스에너지': 'GS에너지',
+    'DGB캐피탈': '디지비캐피탈',
+    '케이티': 'KT'
+}
+
 
 class Scrapper:
     def __init__(self):
@@ -227,6 +236,8 @@ class Scrapper:
             print('cannot find bookrunner tables in prospectus')
             return ([], [], [], [])
         elif tranche_num > len(th)-1:
+            print("number of tables: ", len(th))
+            print("current tranche number", tranche_num)
             print('same table')
             return 'same table'
         else:
@@ -360,6 +371,7 @@ def preprocess(input_fp, sort=True, save=False):
             
                 
 def search_bookrunner(df, save_fp):
+    df = df.iloc[:119, :]
     print(f'Total {df.shape[0]} records')
     history = []
     syndicate = []
@@ -382,11 +394,15 @@ def search_bookrunner(df, save_fp):
         endDate_str = end_time.strftime("%Y%m%d")
 
         deal = detect_tranches(record, df)
+        deal = deal.reset_index()
         # isin_log = list(deal['표준코드'])
         # history.extend(isin_log)
         # print(deal)
 
         company_name = re.sub(r"[\(\[].*?[\)\]]", "", record['발행기관명'])
+        if company_name in company_name_dict.keys():
+            company_name = company_name_dict[company_name]
+            print('searched using name in provided dict')
         
         identifier = [record['identifier1'], record['identifier2']]
 
@@ -439,7 +455,7 @@ def search_bookrunner(df, save_fp):
 
         # print(f'Got book runners {history}')
         print(f'{df.shape[0] - len(history)} left')
-        print(len(syndicate), df.shape[0])
+        # print(len(syndicate), df.shape[0])
         # if idx % 10 == 0:
         #     df['bookrunners'] = syndicate
         #     df['bkr_parts'] = synd_part
