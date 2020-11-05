@@ -21,6 +21,7 @@ def parse_one_deal(data_fp, env_type, deal_idx):
 def parse_batch(data_fp, env_type, output_dir, log_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
+    # df = df.iloc[463:, :]
 
     print(f'{df.shape[0]} deals to parse')
     for idx, record in df.iterrows():
@@ -70,7 +71,7 @@ def post_one_deal(isin, json_fp, env_type):
     return notes, deal_number
 
 
-def post_batch(json_fp, isin_ls_fp, is_new_log, env_type):
+def post_batch(json_fp, env_type, parse_log, post_log):
     json_files = os.listdir(json_fp)
 
     for idx, f in enumerate(json_files):
@@ -81,14 +82,11 @@ def post_batch(json_fp, isin_ls_fp, is_new_log, env_type):
         print(f'posting {isin} ...')
         notes, deal_num = post_one_deal(isin, json_fp, env_type=env_type)
 
-        if is_new_log:
-            if idx == 0:
-                log_fp = isin_ls_fp
-            else:
-                log_fp = './logs/post_log3.csv'
-        else:
-            log_fp = './logs/post_log3.csv'
-        du.post_loging(isin, deal_num, notes, log_fp)
+        # if idx == 0:
+        #     parse_log = parse_log
+        # else:
+        #     parse_log = post_log
+        du.post_loging(isin, deal_num, notes, parse_log, post_log)
 
         # if idx == 5:
         #     break
