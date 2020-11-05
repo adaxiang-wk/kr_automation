@@ -23,6 +23,7 @@ class Parser:
         self.data_df = self.du.load_bkr_df(data_fp)
 
         self.note = []
+        self.has_bkr = True
 
 
     def find_tranches(self, record):
@@ -123,6 +124,8 @@ class Parser:
         tranche_dict['ListingIds'] = [122] # by default
 
         tranche_dict['Syndicate'] = self.parse_syndicate(record)
+        if self.has_bkr:
+            tranche_dict['IsRankEligible'] = True
 
 
         # bkrs = record['bookrunners']
@@ -167,6 +170,7 @@ class Parser:
         syndicate = []
 
         if record['bookrunners'] == []:
+            self.has_bkr = False
             self.note.append('no original book runner info')
             return [self.parse_no_syndicate()] 
 
