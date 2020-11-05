@@ -8,13 +8,13 @@ import infoParser.main_parsing as mp
 import argparse
 
 DATA_ENV = 'prd'
-ACTION_ENV = 'pie'
+ACTION_ENV = 'prd'
 # start_date = 20190930
 # end_date = 20200930
 
 isin_fp = './data/dataframe/Korea20200801_20201027.xls'
-general_info_fp = './data/dataframe/gi_df.csv'
-bkr_fp = './data/dataframe/bkr_df.csv'
+general_info_fp = './data/dataframe/gi_df_2.csv'
+bkr_fp = './data/dataframe/bkr_df_1.csv'
 
 
 def get_info(start_date, end_date):
@@ -42,8 +42,8 @@ def parse_one(isin):
 
 def parse_batch():
     mp.parse_batch(bkr_fp, env_type=DATA_ENV, 
-                   output_dir='./data/json/pie_json3/', 
-                   log_fp='./logs/parse_log3.csv')
+                   output_dir='./data/json/prd_json/', 
+                   log_fp='./logs/prd_parse_log2.csv')
 
 
 def post_one(isin):
@@ -51,7 +51,7 @@ def post_one(isin):
 
 
 def post_batch():
-    mp.post_batch('./data/json/pie_json3', './logs/parse_log3.csv', is_new_log=True, env_type=ACTION_ENV)
+    mp.post_batch('./data/json/prd_json', env_type=ACTION_ENV, parse_log='./logs/prd_post_log2.csv', post_log='./logs/prd_post_log2.csv')
 
 
 if __name__ == "__main__":

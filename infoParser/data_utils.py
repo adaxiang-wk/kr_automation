@@ -123,12 +123,11 @@ class ParseToolBox:
                 candidates = pd.json_normalize(found)
         else:
             candidates = pd.json_normalize(found)
-        
         return candidates
 
 
     def _filter_search_result(self, full_name, candidates, countryID=119):
-        
+
         if countryID > 0:
             company = candidates[candidates['NationalityOfBusinessId'] == countryID]
         else:
@@ -151,6 +150,7 @@ class ParseToolBox:
 
     def get_company_info(self, issuer, countryID=119, is_active='true'):
         search_phrase = re.sub(r"㈜|\n+|[\(\[].*?[\)\]]", "", issuer)
+        print(search_phrase)
         candidates = self._search_company(search_phrase)
         if candidates is None:
             company_id = -1
@@ -324,7 +324,8 @@ def parse_loging(isins, notes, idx, log_fp):
                 log_writer.writerow([isins[0], isins[0], notes])
 
 
-def post_loging(isin, deal_num, notes, log_fp):
+def post_loging(isin, deal_num, notes, log_fp, output_fp):
+    print(output_fp)
     if log_fp[-3:] == 'xls':
         xls = pd.ExcelFile(log_fp)
         log_df = pd.read_excel(xls, 'Sheet1')
@@ -337,7 +338,7 @@ def post_loging(isin, deal_num, notes, log_fp):
     log_df.loc[log_df['isin'] == isin, ['deal_num']] = deal_num
     log_df.loc[log_df['isin'] == isin, ['post_notes']] = notes 
 
-    log_df.to_csv('./logs/post_log3.csv', index=False)
+    log_df.to_csv(output_fp, index=False)
 
 
 
