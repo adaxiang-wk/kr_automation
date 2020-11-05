@@ -227,8 +227,8 @@ class Scrapper:
             print('cannot find bookrunner tables in prospectus')
             return ([], [], [], [])
         elif tranche_num > len(th)-1:
-            print('not a tranche')
-            return 'not a tranche'
+            print('same table')
+            return 'same table'
         else:
             bookrunner_table = th[tranche_num].find_parent('table')
             html_content = str(bookrunner_table)
@@ -318,13 +318,29 @@ def extract_identifier(evt_num):
     return re.sub(r"[\(\[].*?[\)\]]", "", identifier)
 
 
+# def detect_tranches(record, df):
+#     cpny_name = record['발행기관명']
+#     date = record['상장일']
+
+#     deal = df[(df['발행기관명'] == cpny_name) & (df['상장일'] == date)].reset_index()
+
+#     return deal
+
 def detect_tranches(record, df):
-    cpny_name = record['발행기관명']
-    date = record['상장일']
+    issuer_name = record['발행기관명']
+    listing_date = record['상장일']
+    id1 = record['identifier1']
+    id1 = ''.join(id1.split('-')[:-1])
+    
 
-    deal = df[(df['발행기관명'] == cpny_name) & (df['상장일'] == date)].reset_index()
-
-    return deal
+    # from the candidates (all having same issuer as the record)
+    # find the ones with the same listing date
+    candicates = df[df['발행기관명'] == issuer_name].copy()
+    filtered = candicates.loc[candicates['상장일'] == listing_date, :].copy()
+    filtered['id'] = filtered['identifier1'].apply(lambda x: ''.join(x.split('-')[:-1])).copy()
+    one_deal = filtered.loc[filtered['id'] == id1, :].drop(['id'], axis=1)
+    
+    return one_deal
 
 
 def preprocess(input_fp, sort=True, save=False):
@@ -368,7 +384,7 @@ def search_bookrunner(df, save_fp):
         deal = detect_tranches(record, df)
         # isin_log = list(deal['표준코드'])
         # history.extend(isin_log)
-        print(deal)
+        # print(deal)
 
         company_name = re.sub(r"[\(\[].*?[\)\]]", "", record['발행기관명'])
         
@@ -379,8 +395,10 @@ def search_bookrunner(df, save_fp):
         if report is not None:
             for tranch_idx, tranche in deal.iterrows():
                 bookrunner_info = my_scrapper.get_bookrunner(report, tranche_num=tranch_idx)
-                if bookrunner_info == 'not a tranche':
-                    break
+                if bookrunner_info != 'same table':
+                    prev_bookrunner = bookrunner_info
+                else:
+                    bookrunner_info = prev_bookrunner
                 bookrunners, bkr_parts, comanagers, cmgrs_parts = bookrunner_info[0], bookrunner_info[1], bookrunner_info[2], bookrunner_info[3]
                 syndicate.append(bookrunners)
                 synd_part.append(bkr_parts)

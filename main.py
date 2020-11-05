@@ -13,8 +13,8 @@ ACTION_ENV = 'pie'
 # end_date = 20200930
 
 isin_fp = './data/dataframe/Korea20200801_20201027.xls'
-general_info_fp = './data/dataframe/gi_df.csv'
-bkr_fp = './data/dataframe/bkr_df.csv'
+general_info_fp = './data/dataframe/gi_df_2.csv'
+bkr_fp = './data/dataframe/bkr_df_2.csv'
 
 
 def get_info(start_date, end_date):
@@ -25,7 +25,7 @@ def get_info(start_date, end_date):
 
 def get_br():
     sorted_gi_df = bk.preprocess(general_info_fp, sort=True, save=True)
-    # bkr_df = bk.search_bookrunner(sorted_gi_df, save_fp=bkr_fp)
+    bkr_df = bk.search_bookrunner(sorted_gi_df, save_fp=bkr_fp)
     # bkr_df.to_csv(bkr_fp, index=False)
 
 
