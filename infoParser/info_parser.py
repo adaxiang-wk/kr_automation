@@ -72,9 +72,11 @@ class Parser:
         for _, row in tranche_df.iterrows():
             tranche_dict = self.parse_one_tranche(row)
             tranche_list.append(tranche_dict)
+            print("has bkr: ", self.has_bkr)
 
         new_added_isins = list(tranche_df['isin'])
         self.deal_dict['Tranches'] = tranche_list
+        self.deal_dict['Tranches'] = tools.check_rank(self.deal_dict)
         return new_added_isins
         
 
@@ -219,3 +221,5 @@ class Parser:
 
 
         return syndicate
+
+

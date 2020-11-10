@@ -1,6 +1,6 @@
 import pandas as pd 
 log_fp = './logs/prd_post_log1.csv'
-excel_fp = './data/dataframe/Korea20200801_20201027.xls'
+excel_fp = './data/dataframe/Korea202005_202007.xls'
 
 xls = pd.ExcelFile(excel_fp)
 excel_df = pd.read_excel(xls, 'Sheet1')

@@ -108,6 +108,9 @@ class ParseToolBox:
         """
         if len(search_phrase) <= 2:
             search_phrase = self.search_in_dict(search_phrase)
+
+        if len(search_phrase) <= 2:
+            return None
         
         data_env = ec.EnvConfig(self.env_type, 'company')
         url = f'{data_env.COMPANY_BASE_URL}Lookup?name={search_phrase}&isActivateValues={is_active}'
@@ -324,6 +327,36 @@ def parse_loging(isins, notes, idx, log_fp):
                 log_writer.writerow([isins[0], isins[0], notes])
 
 
+
+def post_loging2(isins, notes, deal_number, idx, log_fp):
+    if os.path.exists(log_fp):
+        is_newlog = False
+    else:
+        is_newlog = True
+
+    if is_newlog:
+        write_option = 'w'
+        with open(log_fp, mode=write_option, encoding='UTF-8-sig') as log_file:
+            log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            if idx == 0:
+                log_writer.writerow(['isin', 'tranches in same deal', 'deal_number', 'parse_notes'])
+
+            if len(isins) > 1:
+                for isin in isins:
+                    log_writer.writerow([isin, isins[0], deal_number, notes])
+            else:
+                log_writer.writerow([isins[0], isins[0], deal_number, notes])
+    else:
+        write_option = 'a'
+        with open(log_fp, mode=write_option, encoding='UTF-8-sig') as log_file:
+            log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            if len(isins) > 1:
+                for isin in isins:
+                    log_writer.writerow([isin, isins[0], deal_number, notes])
+            else:
+                log_writer.writerow([isins[0], isins[0], deal_number, notes])
+
+
 def post_loging(isin, deal_num, notes, log_fp, output_fp):
     print(output_fp)
     if log_fp[-3:] == 'xls':
@@ -335,10 +368,40 @@ def post_loging(isin, deal_num, notes, log_fp, output_fp):
     # log_df['deal_no'] = [0]*log_df.shape[0]
     # log_df['notes'] = ['']*log_df.shape[0]
 
-    log_df.loc[log_df['isin'] == isin, ['deal_num']] = deal_num
-    log_df.loc[log_df['isin'] == isin, ['post_notes']] = notes 
+    log_tranche_df = log_df.loc[log_df['tranches in same deal'] == isin, :]
+
+    if log_tranche_df.shape[0] == 1:
+        log_df.loc[log_df['tranches in same deal'] == isin, ['deal_num']] = deal_num
+        log_df.loc[log_df['tranches in same deal'] == isin, ['post_notes']] = notes
+    else:
+        log_df.loc[log_df['tranches in same deal'] == isin, ['deal_num']] = [deal_num]*log_tranche_df.shape[0]
+        if len(notes) != 0:
+            log_df.loc[log_df['tranches in same deal'] == isin, ['post_notes']] = [notes]*log_tranche_df.shape[0] 
 
     log_df.to_csv(output_fp, index=False)
+
+
+######## Checkings before Saving #################
+def check_rank(data_dict):
+    tranches = data_dict['Tranches']
+
+    for idx, tranche_dict in enumerate(tranches):
+        rank = tranche_dict['IsRankEligible']
+        bkr_list = tranche_dict['Syndicate']
+
+        bkr_available = True
+        if (len(bkr_list) == 1) and (bkr_list[0]['Id'] == 141783):
+            bkr_available = False
+        
+        if bkr_available == False and rank == True:
+            tranche_dict.update({'IsRankEligible': False})
+            tranches[idx] = tranche_dict
+        elif bkr_available == True and rank == False:
+            tranche_dict.update({'IsRankEligible': True})
+            tranches[idx] = tranche_dict
+
+    return tranches
+
 
 
 

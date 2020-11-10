@@ -7,15 +7,15 @@ import infoParser.main_parsing as mp
 
 import argparse
 
-DATA_ENV = 'prd'
-ACTION_ENV = 'prd'
+DATA_ENV = 'pie'
+ACTION_ENV = 'pie'
 # start_date = 20190930
 # end_date = 20200930
 
 
 isin_fp = './data/dataframe/Korea202005_202007.xls'
 general_info_fp = './data/dataframe/gi_df_202005_202007.csv'
-bkr_fp = './data/dataframe/bkr_df_202005_202007_1.csv'
+bkr_fp = './data/dataframe/test.csv'
 
 
 def get_info(start_date, end_date):
@@ -48,18 +48,25 @@ def parse_batch():
 
 
 def post_one(isin):
-    mp.post_one_deal(isin, './data/json/pie_json2', env_type=ACTION_ENV)
+    mp.post_one_deal(isin, './data/json/pie_json', env_type=ACTION_ENV)
 
 
 def post_batch():
     mp.post_batch('./data/json/prd_json', env_type=ACTION_ENV, parse_log='./logs/prd_post_log2.csv', post_log='./logs/prd_post_log2.csv')
+
+def parse_post_one(isin):
+    mp.parse_post_one(bkr_fp, isin, ACTION_ENV, save_fp='./data/json/pie_json')
+
+def parse_post_batch():
+    mp.parse_post_batch(bkr_fp, env_type=ACTION_ENV, parse_log='./logs/pie_parse_log.csv', post_log='./logs/pie_post_log.csv', save_fp='./data/json/pie_json')
 
 
 if __name__ == "__main__":
     action_map = {
         'getinfo':get_info, 'getbr':get_br, 
         'parse_one':parse_one, 'parse_batch':parse_batch, 
-        'post_one':post_one, 'post_batch':post_batch
+        'post_one':post_one, 'post_batch':post_batch,
+        'parse_post_one': parse_post_one, 'parse_post_batch':parse_post_batch
     }
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-action', type=str, required=True, help=f'choose an action from {action_map.keys()}')
