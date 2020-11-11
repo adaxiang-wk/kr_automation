@@ -13,9 +13,9 @@ ACTION_ENV = 'pie'
 # end_date = 20200930
 
 
-isin_fp = './data/dataframe/Korea202005_202007.xls'
-general_info_fp = './data/dataframe/gi_df_202005_202007.csv'
-bkr_fp = './data/dataframe/test.csv'
+isin_fp = './data/dataframe/Korea202001_202004.xls'
+general_info_fp = './data/dataframe/gi_df_202001_202004.csv'
+bkr_fp = './data/dataframe/bkr_df_202001_202004.csv'
 
 
 def get_info(start_date, end_date):

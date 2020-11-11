@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import re
 import csv
 
-th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사']
+th_list = ['명칭', '주소', '합계', '인수인', '인수금액및수수료율', '인수조건', '고유번호', '인수금액', '수수료율', '대표', '인수', '대표주관회사', '공동']
 bank_roles = ['대표', '인수', '대표주관회사']
 
 company_name_dict = {
@@ -371,7 +371,6 @@ def preprocess(input_fp, sort=True, save=False):
             
                 
 def search_bookrunner(df, save_fp):
-    df = df.iloc[:119, :]
     print(f'Total {df.shape[0]} records')
     history = []
     syndicate = []
