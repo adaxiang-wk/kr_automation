@@ -22,7 +22,7 @@ def parse_one_deal(data_fp, env_type, deal_idx):
 def parse_batch(data_fp, env_type, output_dir, log_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
-    df = df.iloc[552:, :]
+    df = df.iloc[:2, :]
 
     print(f'{df.shape[0]} deals to parse')
     for idx, record in df.iterrows():
@@ -103,6 +103,7 @@ def parse_post_one(data_fp, isin, env_type, save_fp=''):
 def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
+    # df = df.iloc[:200, :]
 
     for idx, record in df.iterrows():
         isin = record['isin']
@@ -132,6 +133,7 @@ def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
                 file_name = f'{isin}.json'
             with open(os.path.join(save_fp, file_name), 'w') as f:
                 json.dump(data, f)
+            
 
         
 

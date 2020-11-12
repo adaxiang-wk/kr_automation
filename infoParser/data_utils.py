@@ -187,7 +187,7 @@ class ParseToolBox:
 
 
     def parse_mat_date(self, mat_date, cp_rate):
-        if pd.isnull(mat_date) or cp_rate == 0:
+        if pd.isnull(mat_date) or cp_rate == 0 or mat_date[:4] == '9999':
             type_id = 8
             date = None
         else:
