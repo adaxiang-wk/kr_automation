@@ -26,8 +26,8 @@ company_name_dict = {
 
 class Scrapper:
     def __init__(self):
-        driver_path = r'/Users/AdaXiang/geckodriver'
-        self.driver = webdriver.Firefox(executable_path=driver_path)
+        driver_path = r'/Users/adaxiang/chromedriver'
+        self.driver = webdriver.Chrome(executable_path=driver_path)
         self.base_url = 'http://dart.fss.or.kr/'
         self.search_base_url = 'http://dart.fss.or.kr/dsab007/main.do'
 

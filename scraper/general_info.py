@@ -7,8 +7,8 @@ import pandas as pd
 
 class Scrapper:
     def __init__(self, start_date=20190920, end_date=20200920):
-        driver_path = r'/Users/AdaXiang/geckodriver'
-        self.driver = webdriver.Firefox(executable_path=driver_path)
+        driver_path = r'/Users/adaxiang/chromedriver'
+        self.driver = webdriver.Chrome(executable_path=driver_path)
         self.base_url = 'https://isin.krx.co.kr/srch/srch.do?method=srchList'
         self.start_date = start_date
         self.end_date = end_date
