@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import time
 import pandas as pd
+import os
 
 
 class Scrapper:
@@ -86,9 +87,22 @@ class Scrapper:
         print(f'Total {len(isin_list)} records to scrap')
 
         dfs = []
+        saved_isins = []
+        if os.path.exists(saving_path):
+            log_df = pd.read_csv(saving_path)
+            dfs.append(log_df)
+
+            saved_isins = list(log_df['표준코드'])
+
         for idx, isin in enumerate(isin_list):
+            if len(saved_isins) > 0:
+                if isin in saved_isins:
+                    continue
+
             df = self.scrap_one_deal(isin)
             dfs.append(df)
+            
+            saved_isins.append(isin)
 
             print(f'Scraped {isin}, {len(isin_list) - idx -1} left')
 

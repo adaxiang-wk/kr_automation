@@ -13,9 +13,9 @@ ACTION_ENV = 'prd'
 # end_date = 20200930
 
 
-isin_fp = './data/dataframe/Korea202001_202004.xls'
-general_info_fp = './data/dataframe/gi_df_202001_202004.csv'
-bkr_fp = './data/dataframe/bkr_df_202001_202004.csv'
+isin_fp = './data/dataframe/Korea2019_q4.xls'
+general_info_fp = './data/dataframe/gi_df_2019_q4.csv'
+bkr_fp = './data/dataframe/bkr_df_2019_q4.csv'
 
 
 def get_info(start_date, end_date):
