@@ -43,7 +43,9 @@ def parse_batch(data_fp, env_type, output_dir, log_fp):
         du.parse_loging(parsed_isins, my_parser.note, idx, log_fp)
         print(my_parser.note)
         print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
+
         my_parser.note = []
+        my_parser.deal_dict = my_parser.post_format_dict.copy()
 
 
 ############################ post json #############################
@@ -106,6 +108,15 @@ def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
     # df = df.iloc[:200, :]
 
     for idx, record in df.iterrows():
+        # skip that one if it found “일반채권 -분리형BW” from the ISIN information
+        if "일반채권 -분리형BW" in record['특이채권유형']:
+            tranche_df = my_parser.find_tranches(record)
+            new_added_isins = list(tranche_df['isin'])
+            note = "special_bond_type contains 일반채권 -분리형BW"
+            du.parse_loging(new_added_isins, note, idx, parse_log)
+            du.post_loging2(new_added_isins, note, -1, idx, post_log)
+            continue
+
         isin = record['isin']
         
         if os.path.exists(parse_log):
