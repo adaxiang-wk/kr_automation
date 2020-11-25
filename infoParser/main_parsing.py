@@ -105,7 +105,7 @@ def parse_post_one(data_fp, isin, env_type, save_fp=''):
 def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
-    # df = df.iloc[:200, :]
+    # df = df.iloc[:10, :]
 
     for idx, record in df.iterrows():
         # skip that one if it found “일반채권 -분리형BW” from the ISIN information
@@ -142,8 +142,7 @@ def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
                 file_name = f'{isin}_{deal_number}.json'
             else:
                 file_name = f'{isin}.json'
-            with open(os.path.join(save_fp, file_name), 'w') as f:
-                json.dump(data, f)
+            du.json_dumper(parsed, file_name)
             
 
         
