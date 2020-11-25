@@ -378,7 +378,7 @@ def search_bookrunner(df, save_fp):
 
     syndi_cmgrs = []
     syndi_cmgrs_parts = []
-    for idx, record in df.iterrows():
+    for _, record in df.iterrows():
         if record['표준코드'] in history:
             continue
         my_scrapper = Scrapper()
@@ -478,28 +478,3 @@ def write_csv(content_list, save_fp):
     with open(save_fp, mode='a', encoding='UTF-8-sig') as log_file:
         log_writer = csv.writer(log_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         log_writer.writerow(content_list)
-
-        
-
-if __name__ == "__main__":
-    # start_date = 20190920
-    # end_date = 20200920
-    # isin = 'KR6000012A90'
-    # fp = './korea.xls'
-    # keyword = '산은캐피탈 648-2'
-    # company_name = '000010'
-    # date = '20200803'
-
-    # my_scrapper = Scrapper()
-    # # report_html = my_scrapper.search(keyword)
-    # my_scrapper.search_company(company_name, date)
-    # my_scrapper.get_bookrunner(report_html)
-
-    input_fp = './data/final_df.csv'
-    output_fp = './data/result_df.csv'
-
-    
-    df = preprocess(input_fp)
-    result_df = search_bookrunner(df)
-    result_df.to_csv(output_fp, index=False)
- 
