@@ -8,7 +8,7 @@ import csv
 import os
 from googletrans import Translator
 
-import envSetter.env_config as ec
+import src.envSetter.env_config as ec
 
 
 with open('./dependencies/company_dict.json', encoding='UTF-8-sig') as js_file:

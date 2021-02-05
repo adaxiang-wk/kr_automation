@@ -1,6 +1,6 @@
-import infoParser.data_utils as du
-import infoParser.info_parser as ipsr 
-import envSetter.env_config as ec
+import src.infoParser.data_utils as du
+import src.infoParser.info_parser as ipsr 
+import src.envSetter.env_config as ec
 
 import os
 import json

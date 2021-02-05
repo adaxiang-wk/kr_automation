@@ -1,4 +1,4 @@
-import infoParser.data_utils as tools
+import src.infoParser.data_utils as tools
 import pandas as pd
 import json
 import numpy as np

@@ -1,4 +1,4 @@
-import envSetter.auth as auth
+import src.envSetter.auth as auth
 
 class EnvConfig():
     def __init__(self, env_type, section):

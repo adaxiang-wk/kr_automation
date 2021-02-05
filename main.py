@@ -1,9 +1,9 @@
-import scraper.general_info as gi 
-import scraper.bookrunner as bk
+import src.scraper.general_info as gi 
+import src.scraper.bookrunner as bk
 
-import infoParser.info_parser as ipsr
-import infoParser.data_utils as tools
-import infoParser.main_parsing as mp
+import src.infoParser.info_parser as ipsr
+import src.infoParser.data_utils as tools
+import src.infoParser.main_parsing as mp
 
 import argparse
 
