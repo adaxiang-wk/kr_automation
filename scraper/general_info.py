@@ -4,12 +4,17 @@ from selenium import webdriver
 import time
 import pandas as pd
 import os
-
+from tqdm import tqdm
+from selenium.webdriver.chrome.options import Options
 
 class Scrapper:
-    def __init__(self, start_date=20190920, end_date=20200920):
-        driver_path = r'/Users/adaxiang/chromedriver'
-        self.driver = webdriver.Chrome(executable_path=driver_path)
+    def __init__(self, driver_path, start_date=20190920, end_date=20200920, headless=True):
+        if headless:
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            self.driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
+        else:
+            self.driver = webdriver.Chrome(executable_path=driver_path)
         self.base_url = 'https://isin.krx.co.kr/srch/srch.do?method=srchList'
         self.start_date = start_date
         self.end_date = end_date
@@ -84,7 +89,7 @@ class Scrapper:
         data = pd.read_excel(xls, 'Sheet1')
 
         isin_list = list(data['ISIN'])
-        print(f'Total {len(isin_list)} records to scrap')
+        # print(f'Total {len(isin_list)} records to scrap')
 
         dfs = []
         saved_isins = []
@@ -94,7 +99,8 @@ class Scrapper:
 
             saved_isins = list(log_df['표준코드'])
 
-        for idx, isin in enumerate(isin_list):
+        isin_list = [isin for isin in isin_list if isin not in saved_isins]
+        for _, isin in tqdm(enumerate(isin_list), total=data.shape[0], initial=data.shape[0]-len(isin_list)):
             if len(saved_isins) > 0:
                 if isin in saved_isins:
                     continue
@@ -104,28 +110,28 @@ class Scrapper:
             
             saved_isins.append(isin)
 
-            print(f'Scraped {isin}, {len(isin_list) - idx -1} left')
+            # print(f'Scraped {isin}, {len(isin_list) - idx -1} left')
 
-            if idx % 10 == 0:
-                final_df = pd.concat(dfs, axis=0)
-                final_df.to_csv(saving_path, index=False)
+            # if idx % 10 == 0:
+            final_df = pd.concat(dfs, axis=0)
+            final_df.to_csv(saving_path, index=False)
 
         final_df = pd.concat(dfs, axis=0)
         final_df.to_csv(saving_path, index=False)
 
 
 
-if __name__ == "__main__":
-    start_date = 20190930
-    end_date = 20200930
-    # isin = 'KR6000012A90'
-    input_fp = './data/korea.xls'
-    output_fp = './data/final_df.csv'
+# if __name__ == "__main__":
+#     start_date = 20190930
+#     end_date = 20200930
+#     # isin = 'KR6000012A90'
+#     input_fp = './data/korea.xls'
+#     output_fp = './data/final_df.csv'
 
-    my_scrapper = Scrapper()
-    my_scrapper.scrap_list_of_deals(input_fp, output_fp)
-    my_scrapper.driver.quit()
-    # my_scrapper.scrap_one_deal(isin)
+#     my_scrapper = Scrapper()
+#     my_scrapper.scrap_list_of_deals(input_fp, output_fp)
+#     my_scrapper.driver.quit()
+#     # my_scrapper.scrap_one_deal(isin)
 
 
     """

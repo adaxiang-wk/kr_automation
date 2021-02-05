@@ -13,20 +13,28 @@ ACTION_ENV = 'prd'
 # end_date = 20200930
 
 
-isin_fp = './data/dataframe/Korea2019_q4.xls'
+isin_fp = './data/dataframe/Korea2019_q4.xlsx'
 general_info_fp = './data/dataframe/gi_df_2019_q4.csv'
 bkr_fp = './data/dataframe/bkr_df_2019_q4.csv'
 
+driver_path = '/Users/adaxiang/chromedriver'
+headless = True
+
 
 def get_info(start_date, end_date):
-    gi_scrapper = gi.Scrapper(start_date=start_date, end_date=end_date)
+    print("Getting info from KRX ......")
+    gi_scrapper = gi.Scrapper(driver_path, start_date=start_date, end_date=end_date, headless=headless)
     gi_scrapper.scrap_list_of_deals(isin_fp, general_info_fp)
     gi_scrapper.driver.quit()
+
+    print("Getting bookrunner info from DART ......")
+    sorted_gi_df = bk.preprocess(general_info_fp, sort=True, save=True)
+    bk.search_bookrunner(sorted_gi_df, driver_path=driver_path, save_fp=bkr_fp, headless=headless)
 
 
 def get_br():
     sorted_gi_df = bk.preprocess(general_info_fp, sort=True, save=True)
-    bkr_df = bk.search_bookrunner(sorted_gi_df, save_fp=bkr_fp)
+    bk.search_bookrunner(sorted_gi_df, driver_path=driver_path, save_fp=bkr_fp, headless=headless)
     # bkr_df.to_csv(bkr_fp, index=False)
 
 
