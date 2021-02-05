@@ -72,7 +72,7 @@ class Parser:
         for _, row in tranche_df.iterrows():
             tranche_dict = self.parse_one_tranche(row)
             tranche_list.append(tranche_dict)
-            print("has bkr: ", self.has_bkr)
+            # print("has bkr: ", self.has_bkr)
 
         new_added_isins = list(tranche_df['isin'])
         self.deal_dict['Tranches'] = tranche_list
@@ -171,7 +171,7 @@ class Parser:
     def parse_syndicate(self, record):
         syndicate = []
 
-        if record['bookrunners'] == []:
+        if record['bookrunners'] == [] or record['bookrunners'] == "[[]]":
             self.has_bkr = False
             self.note.append('no original book runner info')
             return [self.parse_no_syndicate()] 

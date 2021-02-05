@@ -1,6 +1,6 @@
-import infoParser.data_utils as tools
-import infoParser.info_parser as ipsr
-import infoParser.main_parsing as mp
+import src.infoParser.data_utils as tools
+import src.infoParser.info_parser as ipsr
+import src.infoParser.main_parsing as mp
 import re
 import ast
 import pandas as pd

@@ -5,6 +5,7 @@ import src.envSetter.env_config as ec
 import os
 import json
 import pandas as pd
+from tqdm import tqdm
 
 ############### parse info into json ############################
 def parse_one_deal(data_fp, env_type, deal_idx):
@@ -22,10 +23,17 @@ def parse_one_deal(data_fp, env_type, deal_idx):
 def parse_batch(data_fp, env_type, output_dir, log_fp):
     my_parser = ipsr.Parser(data_fp, env_type=env_type)
     df = my_parser.data_df.reset_index()
-    df = df.iloc[:2, :]
+    # df = df.iloc[:2, :]
 
-    print(f'{df.shape[0]} deals to parse')
-    for idx, record in df.iterrows():
+    # print(f'{df.shape[0]} deals to parse')
+    parse_isins = []
+    if os.path.exists(log_fp):
+        parse_df = pd.read_csv(log_fp)
+        parse_isins = list(parse_df['isin'])
+        
+    left_df = df.loc[~df['isin'].isin(parse_isins), :]
+
+    for idx, record in tqdm(left_df.iterrows(), total=df.shape[0], initial=len(parse_isins)):
         isin = record['isin']
         saved_fp = os.path.join(output_dir, f'{isin}.json')
         if os.path.exists(saved_fp):
@@ -34,15 +42,23 @@ def parse_batch(data_fp, env_type, output_dir, log_fp):
         if isin in my_parser.parsed_history:
             continue
 
-        print(f"Parsing {isin}")
+        if "일반채권 -분리형BW" in record['special_bond_type']:
+            tranche_df = my_parser.find_tranches(record)
+            new_added_isins = list(tranche_df['isin'])
+            note = "special_bond_type contains 일반채권 -분리형BW"
+            du.parse_loging(new_added_isins, note, idx, log_fp)
+            du.post_loging2(new_added_isins, note, -1, idx, log_fp)
+            continue
+
+        # print(f"Parsing {isin}")
         parsed_isins = my_parser.parse_one_deal(record)
         parsed = my_parser.deal_dict
 
        
         du.json_dumper(parsed, saved_fp)
         du.parse_loging(parsed_isins, my_parser.note, idx, log_fp)
-        print(my_parser.note)
-        print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
+        # print(my_parser.note)
+        # print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
 
         my_parser.note = []
         my_parser.deal_dict = my_parser.post_format_dict.copy()
@@ -62,12 +78,14 @@ def post_one_deal(isin, json_fp, env_type, data=None):
     else:
         json_str = data
 
+    isins = [tranche['ISINs'][0] for tranche in data_json['Tranches']] 
+
     deal_number = 0
     req_post = post_env.auth_app.post(f'{post_env.POST_URL}', json_str)
     if req_post.status_code == 200 or req_post.status_code == 201:
         deal_number = req_post.content.decode("utf-8")
-        success_info = f'{isin}_{deal_number} is posted'
-        print(success_info)
+        # success_info = f'{isin}_{deal_number} is posted'
+        # print(success_info)
 
         if len(json_fp) > 0:
             after_post = os.path.join(json_fp, f'{isin}_{deal_number}.json')
@@ -75,7 +93,7 @@ def post_one_deal(isin, json_fp, env_type, data=None):
 
     else:
         notes = str(req_post) + ' ' + str(req_post.content)
-        print(notes)
+        # print(notes)
 
         if len(json_fp) == 0:
             failed_fp = './data/json/failed_pie'
@@ -84,7 +102,7 @@ def post_one_deal(isin, json_fp, env_type, data=None):
             with open(os.path.join(failed_fp, f'{isin}.json'), 'w') as f:
                 json.dump(json_str, f)
 
-    return notes, deal_number
+    return notes, deal_number, isins
 
 
 def parse_post_one(data_fp, isin, env_type, save_fp=''):
@@ -107,9 +125,16 @@ def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
     df = my_parser.data_df.reset_index()
     # df = df.iloc[:10, :]
 
-    for idx, record in df.iterrows():
+    parse_isins = []
+    if os.path.exists(parse_log):
+        parse_df = pd.read_csv(parse_log)
+        parse_isins = list(parse_df['isin'])
+        
+    left_df = df.loc[~df['isin'].isin(parse_isins), :]
+
+    for idx, record in tqdm(left_df.iterrows(), total=df.shape[0], initial=len(parse_isins)):
         # skip that one if it found “일반채권 -분리형BW” from the ISIN information
-        if "일반채권 -분리형BW" in record['특이채권유형']:
+        if "일반채권 -분리형BW" in record['special_bond_type']:
             tranche_df = my_parser.find_tranches(record)
             new_added_isins = list(tranche_df['isin'])
             note = "special_bond_type contains 일반채권 -분리형BW"
@@ -128,48 +153,52 @@ def parse_post_batch(data_fp, env_type, parse_log, post_log, save_fp):
         if isin in my_parser.parsed_history:
             continue
 
-        print(f"Parsing {isin}")
+        # print(f"Parsing {isin}")
         parsed_isins = my_parser.parse_one_deal(record)
         parsed = my_parser.deal_dict
         du.parse_loging(parsed_isins, my_parser.note, idx, parse_log)
 
         data = du.json_dumper(parsed)
-        post_notes, deal_number = post_one_deal(isin, json_fp='', env_type=env_type, data=data)
+        post_notes, deal_number, _ = post_one_deal(isin, json_fp='', env_type=env_type, data=data)
         du.post_loging2(parsed_isins, post_notes, deal_number, idx, post_log)
 
         if len(save_fp) > 0:
-            if deal_number != 0:
+            if deal_number != -1:
                 file_name = f'{isin}_{deal_number}.json'
             else:
                 file_name = f'{isin}.json'
-            du.json_dumper(parsed, file_name)
+            file_fp = os.path.join(save_fp, file_name)
+            du.json_dumper(parsed, file_fp)
             
 
         
 
-        print(my_parser.note)
-        print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
+        # print(my_parser.note)
+        # print(f'parsed {parsed_isins}, {df.shape[0] - idx -1} left')
         my_parser.note = []
 
 
-def post_batch(json_fp, env_type, parse_log, post_log):
+def post_batch(json_fp, env_type, post_log):
     json_files = os.listdir(json_fp)
-    origin_post_log = post_log
+    left_files = [f for f in json_files if "_" not in f]
+    # origin_post_log = post_log
 
-    for idx, f in enumerate(json_files):
+    for idx, f in tqdm(enumerate(left_files), total=len(json_files), initial=len(json_files)-len(left_files)):
         if '_' in f:
             continue
 
         isin = f.split('.')[0]
-        print(f'posting {isin} ...')
-        notes, deal_num = post_one_deal(isin, json_fp, env_type=env_type)
+        # print(f'posting {isin} ...')
+        notes, deal_num, isins = post_one_deal(isin, json_fp, env_type=env_type)
 
-        if idx == 0:
-            post_log = parse_log
-        else:
-            post_log = origin_post_log
+
+        # if idx == 0:
+        #     post_log = parse_log
+        # else:
+        #     post_log = origin_post_log
         
-        du.post_loging(isin, deal_num, notes, parse_log, post_log)
+        du.post_loging2(isins, notes, deal_num, idx, post_log)
+        # du.post_loging(isin, deal_num, notes, parse_log, post_log)
 
         # if idx == 15:
         #     break

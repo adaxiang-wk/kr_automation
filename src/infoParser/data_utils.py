@@ -136,7 +136,7 @@ class ParseToolBox:
         else:
             company = candidates
 
-        print(full_name)
+        # print(full_name)
 
         if company.shape[0] < 1:
             raise ValueError(f"cannot find companies with given countryID = {countryID}")
@@ -153,7 +153,7 @@ class ParseToolBox:
 
     def get_company_info(self, issuer, countryID=119, is_active='true'):
         search_phrase = re.sub(r"㈜|\n+|[\(\[].*?[\)\]]", "", issuer)
-        print(search_phrase)
+        # print(search_phrase)
         candidates = self._search_company(search_phrase)
         if candidates is None:
             company_id = -1
@@ -358,7 +358,7 @@ def post_loging2(isins, notes, deal_number, idx, log_fp):
 
 
 def post_loging(isin, deal_num, notes, log_fp, output_fp):
-    print(output_fp)
+    # print(output_fp)
     if log_fp[-3:] == 'xls':
         xls = pd.ExcelFile(log_fp)
         log_df = pd.read_excel(xls, 'Sheet1')

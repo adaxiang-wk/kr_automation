@@ -68,7 +68,8 @@ df_cols = [
         "발행방법",
         "발행구분",
         "크라우드펀딩여부",
-        "표면이자율" "확정여부",
+        "SRI채권 신청구분"
+        "표면이자율 확정여부",
         "표면이자율(%)",
         "낙찰금리(%)",
         "발행가액(%)",
@@ -121,7 +122,8 @@ df_cols = [
         "bkr_parts",
         "comanagers",
         "cmgr_parts",
-    ]
+]
+
 
 
 class Scrapper:
@@ -493,7 +495,7 @@ def search_bookrunner(df, driver_path, save_fp, headless=True):
         saved_isins = list(log_df['표준코드'])
 
     left_df = df.loc[~df['표준코드'].isin(saved_isins), :]
-    for _, record in tqdm(left_df.iterrows(), total=df.shape[0], initial=df.shape[0]-left_df.shape[0]):
+    for _, record in tqdm(left_df.iterrows(), total=df.shape[0], initial=len(saved_isins)):
         if record["표준코드"] in history:
             continue
         if record['표준코드'] in saved_isins:

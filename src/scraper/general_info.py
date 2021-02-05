@@ -100,7 +100,7 @@ class Scrapper:
             saved_isins = list(log_df['표준코드'])
 
         isin_list = [isin for isin in isin_list if isin not in saved_isins]
-        for _, isin in tqdm(enumerate(isin_list), total=data.shape[0], initial=data.shape[0]-len(isin_list)):
+        for _, isin in tqdm(enumerate(isin_list), total=data.shape[0], initial=len(saved_isins)):
             if len(saved_isins) > 0:
                 if isin in saved_isins:
                     continue

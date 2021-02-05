@@ -7,8 +7,8 @@ import src.infoParser.main_parsing as mp
 
 import argparse
 
-DATA_ENV = 'prd'
-ACTION_ENV = 'prd'
+DATA_ENV = 'pie'
+ACTION_ENV = 'pie'
 # start_date = 20190930
 # end_date = 20200930
 
@@ -16,6 +16,10 @@ ACTION_ENV = 'prd'
 isin_fp = './data/dataframe/Korea2019_q4.xlsx'
 general_info_fp = './data/dataframe/gi_df_2019_q4.csv'
 bkr_fp = './data/dataframe/bkr_df_2019_q4.csv'
+
+parse_log_fp = './logs/pie_parse_2019q4.csv'
+post_log_fp = './logs/pie_post_2019q4.csv'
+json_dir = f'./data/json/{ACTION_ENV}_json'
 
 driver_path = '/Users/adaxiang/chromedriver'
 headless = True
@@ -51,22 +55,22 @@ def parse_one(isin):
 
 def parse_batch():
     mp.parse_batch(bkr_fp, env_type=DATA_ENV, 
-                   output_dir='./data/json/prd_json/', 
-                   log_fp='./logs/prd_parse_log1.csv')
+                   output_dir=json_dir, 
+                   log_fp=parse_log_fp)
 
 
 def post_one(isin):
-    mp.post_one_deal(isin, './data/json/prd_json', env_type=ACTION_ENV)
+    mp.post_one_deal(isin, json_dir, env_type=ACTION_ENV)
 
 
 def post_batch():
-    mp.post_batch('./data/json/prd_json', env_type=ACTION_ENV, parse_log='./logs/prd_post_log2.csv', post_log='./logs/prd_post_log2.csv')
+    mp.post_batch(json_dir, env_type=ACTION_ENV, post_log=post_log_fp)
 
 def parse_post_one(isin):
-    mp.parse_post_one(bkr_fp, isin, ACTION_ENV, save_fp='./data/json/pie_json')
+    mp.parse_post_one(bkr_fp, isin, ACTION_ENV, save_fp=json_dir)
 
 def parse_post_batch():
-    mp.parse_post_batch(bkr_fp, env_type=ACTION_ENV, parse_log='./logs/prd_parse_log1.csv', post_log='./logs/prd_post_log1.csv', save_fp='./data/json/prd_json')
+    mp.parse_post_batch(bkr_fp, env_type=ACTION_ENV, parse_log=parse_log_fp, post_log=post_log_fp, save_fp=json_dir)
 
 
 if __name__ == "__main__":
