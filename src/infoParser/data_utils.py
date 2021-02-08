@@ -139,7 +139,8 @@ class ParseToolBox:
         # print(full_name)
 
         if company.shape[0] < 1:
-            raise ValueError(f"cannot find companies with given countryID = {countryID}")
+            # raise ValueError(f"cannot find companies with given countryID = {countryID}")
+            return None
         else:
             # if possible, find the one with the exact proper name
             chosen = company.loc[company['ProperName'] == full_name, :]
@@ -159,7 +160,10 @@ class ParseToolBox:
             company_id = -1
         else:
             company = self._filter_search_result(issuer, candidates, countryID=countryID)
-            company_id = company['Id'].values[0]
+            if company is None:
+                company_id = -1
+            else:
+                company_id = company['Id'].values[0]
 
         return company_id
 

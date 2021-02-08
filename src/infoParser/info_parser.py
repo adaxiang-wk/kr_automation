@@ -167,6 +167,20 @@ class Parser:
 
         return syndicate_dict
 
+    
+    def _clean_digit_str(self, digit_str):
+        if digit_str == '-':
+            return 0
+        digit_str = digit_str.replace(',', '')
+        try:
+            digit = int(digit_str)
+        except ValueError:
+            try:
+                digit = int(digit_str[:-1])
+            except ValueError:
+                digit = 0
+        return digit
+
 
     def parse_syndicate(self, record):
         syndicate = []
@@ -182,12 +196,12 @@ class Parser:
         else:
             cmgrs = record['comanagers']
             cmgr_parts_str =  ast.literal_eval(record['cmgr_parts'])
-            cmgr_parts = list(map(lambda x: round(int(x.replace(',', '')) / 1000000, 2) if x != '-' else 0, cmgr_parts_str))
+            cmgr_parts = list(map(lambda x: round(self._clean_digit_str(x) / 1000000, 2), cmgr_parts_str))
 
 
         bkrs = record['bookrunners']
         bkr_parts_str =  ast.literal_eval(record['bkr_parts'])
-        bkr_parts = list(map(lambda x: round(int(x.replace(',', '')) / 1000000, 2) if x != '-' else 0, bkr_parts_str))
+        bkr_parts = list(map(lambda x: round(self._clean_digit_str(x) / 1000000, 2), bkr_parts_str))
 
         issue_size = self.du.parse_money(record['issue_size'])
 

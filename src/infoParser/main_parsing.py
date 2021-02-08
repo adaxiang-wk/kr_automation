@@ -96,7 +96,7 @@ def post_one_deal(isin, json_fp, env_type, data=None):
         # print(notes)
 
         if len(json_fp) == 0:
-            failed_fp = './data/json/failed_pie'
+            failed_fp = './data/json/failed_{env_type}'
             if not os.path.exists(failed_fp):
                 os.mkdir(failed_fp)
             with open(os.path.join(failed_fp, f'{isin}.json'), 'w') as f:
@@ -185,6 +185,9 @@ def post_batch(json_fp, env_type, post_log):
 
     for idx, f in tqdm(enumerate(left_files), total=len(json_files), initial=len(json_files)-len(left_files)):
         if '_' in f:
+            continue
+
+        if f[-4:] != 'json':
             continue
 
         isin = f.split('.')[0]
